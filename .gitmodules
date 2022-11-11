@@ -1,0 +1,9 @@
+[submodule "deps/slang"]
+	path = deps/slang
+	url = https://github.com/paulsc96/slang.git
+[submodule "deps/fmt"]
+	path = deps/fmt
+	url = https://github.com/fmtlib/fmt.git
+[submodule "deps/cxxopts"]
+	path = deps/cxxopts
+	url = https://github.com/jarro2783/cxxopts
