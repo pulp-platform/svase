@@ -13,3 +13,4 @@ $(build_dir):
 
 include snitch.mk
 include idma.mk
+include cva6.mk
