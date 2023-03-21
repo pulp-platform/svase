@@ -97,7 +97,7 @@ int driverMain(int argc, char** argv) {
     slangDriver.diagEngine.setIgnoreAllWarnings(verbosity > DiagSev::Warning);
     slangDriver.addStandardArgs();
     ok = true;
-    auto builtinFlags = "--ignore-unknown-modules --allow-use-before-declare --single-unit"sv;
+    auto builtinFlags = "--ignore-unknown-modules --allow-use-before-declare --single-unit -Wrange-width-oob"sv;
     if (cmdOptsRes.count("fslang"))
         ok &= slangDriver.processCommandFile(cmdOptsRes["slang-argfile"].as<std::string>(), true);
     std::string slangArgs = cmdOptsRes.count("slang-args") ? cmdOptsRes["slang-args"].as<std::string>() : "";
@@ -150,9 +150,10 @@ int driverMain(int argc, char** argv) {
         design = std::make_unique<Design>(*compilation->getRoot().topInstances.begin());
         synTree = compilation->getSyntaxTrees().back();
         // Run our passes (TODO: somehow handle boolean return?)
-        synTree = UniqueModuleRewriter(*design, alloc, strAlloc, diag).transform(synTree);
+        // synTree = UniqueModuleRewriter(*design, alloc, strAlloc, diag).transform(synTree);
         synTree = ParameterRewriter(*design, alloc, strAlloc, diag).transform(synTree);
-        synTree = GenerateRewriter(*design, alloc, strAlloc, diag).transform(synTree);
+        // synTree = GenerateRewriter(*design, alloc, strAlloc, diag).transform(synTree);
+        synTree = DefaultAssignmentRewriter(*design, alloc, strAlloc, diag).transform(synTree);
    // } catch (const std::exception e) {diag.log(DiagSev::Fatal, e.what()); ok = false;}
     //if (!ok) return 6;
 

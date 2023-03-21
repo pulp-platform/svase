@@ -423,4 +423,50 @@ void GenerateRewriter::handle(const GenerateRegionSyntax &syn) {handleGenerate(s
 
 void GenerateRewriter::handle(const HierarchyInstantiationSyntax &syn) {handleGenerate(syn);}
 
+
+void DefaultAssignmentRewriter::handle(const StructuredAssignmentPatternSyntax &pd) {
+    printf("StructuredAssignmentPattern %s\n", pd.toString().c_str());
+    printf(" first token %s\n", pd.getFirstToken().toString().c_str());
+}
+void DefaultAssignmentRewriter::handle(const AssignmentPatternItemSyntax &pd) {
+    printf("AssignmentItem %s\n", pd.toString().c_str());
+}
+void DefaultAssignmentRewriter::handle(const AssignmentPatternExpressionSyntax &pd) {
+    printf("AssignmentPatternExpressionSyntax %s\n", pd.toString().c_str());
+    printf(" first token %s\n", pd.getFirstToken().toString().c_str());
+    auto type = pd.type;
+    if (type) {
+        printf(" type %s\n", type->toString().c_str());
+        // has type infront of it
+        auto amountOfChildren = pd.getChildCount();
+        printf("childs %d\n", amountOfChildren);
+        int i = 0;
+        bool containsDefault = false;
+        while(i < amountOfChildren){
+          auto child = pd.getChild(i);
+          printf("i %d, %d\n", i, child.isNode());
+          try {
+            auto node = child.node();
+            // TODO: should be rewritten with visitor but now we have private function issues
+            printf(" %d, %s\n", i, node->toString().c_str());
+            if (node->isKind(SyntaxKind::StructuredAssignmentPattern))
+            {
+              // TODO: this is very ugly and should be done with a visitor
+              int index_str = node->toString().find("default");
+              if (index_str != -1){
+                containsDefault = true;
+              }
+            }
+          } 
+          catch (...){
+            printf("not a node %d (can be ignored)\n", i);
+          }
+          i++;
+        }
+        if (containsDefault) {
+          auto cloned = clone(pd.getChild(1).node()->as<StructuredAssignmentPatternSyntax>(), alloc);
+          replace(pd, *cloned);
+        }
+    }
+}
 }
