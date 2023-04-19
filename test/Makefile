@@ -11,6 +11,7 @@ test_deps:
 $(build_dir):
 	mkdir -p $@
 
-include snitch.mk
-include idma.mk
-include cva6.mk
+# include snitch.mk
+# include idma.mk
+# include cva6.mk
+include cheshire.mk
