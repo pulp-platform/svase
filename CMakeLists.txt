@@ -21,7 +21,7 @@ add_executable(svase
         src/driver.cpp
         src/diag.cpp)
 target_include_directories(svase PRIVATE include)
-target_link_libraries(svase PRIVATE slang fmt)
+target_link_libraries(svase PRIVATE svlang fmt)
 
 
 
