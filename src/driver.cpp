@@ -106,7 +106,7 @@ int driverMain(int argc, char **argv) {
   slangDriver.addStandardArgs();
   ok = true;
   auto builtinFlags =
-      "--ignore-unknown-modules --allow-use-before-declare --single-unit -Wrange-width-oob"sv;
+      "--ignore-unknown-modules --allow-use-before-declare --single-unit -Wrange-width-oob -Wrange-oob"sv;
   if (cmdOptsRes.count("fslang"))
     ok &= slangDriver.processCommandFile(
         cmdOptsRes["slang-argfile"].as<std::string>(), true);
@@ -177,14 +177,14 @@ int driverMain(int argc, char **argv) {
       std::make_unique<Design>(*compilation->getRoot().topInstances.begin());
   synTree = compilation->getSyntaxTrees().back();
   // Run our passes (TODO: somehow handle boolean return?)
-  // synTree = UniqueModuleRewriter(*design, alloc, strAlloc,
-  // diag).transform(synTree);
+  synTree =
+      UniqueModuleRewriter(*design, alloc, strAlloc, diag).transform(synTree);
   synTree =
       ParameterRewriter(*design, alloc, strAlloc, diag).transform(synTree);
   // synTree = GenerateRewriter(*design, alloc, strAlloc,
   // diag).transform(synTree);
-  synTree = DefaultAssignmentRewriter(*design, alloc, strAlloc, diag)
-                .transform(synTree);
+  // synTree = DefaultAssignmentRewriter(*design, alloc, strAlloc, diag)
+  //               .transform(synTree);
   // } catch (const std::exception e) {diag.log(DiagSev::Fatal, e.what()); ok =
   // false;}
   // if (!ok) return 6;

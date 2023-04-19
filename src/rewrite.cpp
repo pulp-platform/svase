@@ -581,15 +581,15 @@ void GenerateRewriter::handle(const HierarchyInstantiationSyntax &syn) {
 void DefaultAssignmentRewriter::handle(
     const StructuredAssignmentPatternSyntax &pd) {
   printf("StructuredAssignmentPattern %s\n", pd.toString().c_str());
-  printf(" first token %s\n", pd.getFirstToken().toString().c_str());
+  // printf(" first token %s\n", pd.getFirstToken().toString().c_str());
 }
 void DefaultAssignmentRewriter::handle(const AssignmentPatternItemSyntax &pd) {
   printf("AssignmentItem %s\n", pd.toString().c_str());
 }
 void DefaultAssignmentRewriter::handle(
     const AssignmentPatternExpressionSyntax &pd) {
-  printf("AssignmentPatternExpressionSyntax %s\n", pd.toString().c_str());
-  printf(" first token %s\n", pd.getFirstToken().toString().c_str());
+  // printf("AssignmentPatternExpressionSyntax %s\n", pd.toString().c_str());
+  // printf(" first token %s\n", pd.getFirstToken().toString().c_str());
   auto type = pd.type;
   if (type) {
     printf(" type %s\n", type->toString().c_str());
