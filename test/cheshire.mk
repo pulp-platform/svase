@@ -1,6 +1,6 @@
 
 cheshire_build_dir = $(build_dir)/cheshire
-cheshire_rev = ff4e8cd0558355bf9672721f68401f2affba9b3e
+cheshire_rev = 9b6c99a749cbba857aabe41fec10830ef0c07b56
 
 $(cheshire_build_dir): | $(build_dir)
 	rm -rf $@
