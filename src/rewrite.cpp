@@ -269,7 +269,7 @@ MemberSyntax *GenerateRewriter::unrollGenSyntax(MemberSyntax &membSyn, const Sco
                                                 const GenerateBlockSymbol *blockSym) {
     // After generate, skip into its possible block scope unless an actual block syntax exists.
     auto &genScope = blockSym ? *blockSym : scope;
-    if (blockSym && !blockSym->isInstantiated) return makeEmptyMember();
+    if (blockSym && blockSym->isUninstantiated) return makeEmptyMember();
     switch (membSyn.kind) {
         case SyntaxKind::IfGenerate: return unrollGenSyntax(membSyn.as<IfGenerateSyntax>(), genScope, beginName);
         case SyntaxKind::CaseGenerate: return unrollGenSyntax(membSyn.as<CaseGenerateSyntax>(), genScope, beginName);
@@ -347,7 +347,7 @@ MemberSyntax *GenerateRewriter::unrollGenSyntax(const LoopGenerateSyntax &loopSy
     size_t i = 0;
     for (auto &entry: topArraySym->entries) {
         // Skip uninstantiated members
-        if (!entry->isInstantiated) {newMembers[i++] = makeEmptyMember(); continue;}
+        if (entry->isUninstantiated) {newMembers[i++] = makeEmptyMember(); continue;}
         // Emit defparam assignment before member
         auto arrayIdxStr = entry->arrayIndex->toString();
         auto loopGenvarDeclStr = fmt::format("\nlocalparam {} = {};\n", loopSyn.identifier.toString(), arrayIdxStr);
@@ -387,7 +387,7 @@ MemberSyntax *GenerateRewriter::unrollGenSyntax(const HierarchyInstantiationSynt
     auto instSymGeneric = getScopeMember(scope, (*instSyn.instances.begin())->decl->name.rawText());
     if (!instSymGeneric) diag.log(DiagSev::Fatal, "Could not find compilation symbol for instance", instSyn);
     // Check if this is a black box or non-module; if so, leave it be.
-    if (instSymGeneric->kind == SymbolKind::UnknownModule) return clone(instSyn, alloc);
+    if (instSymGeneric->kind == SymbolKind::Unknown) return clone(instSyn, alloc);
     auto &instSym = instSymGeneric->as<InstanceSymbol>();
     if (!instSym.isModule()) return clone(instSyn, alloc);
     // Identify unique module

@@ -75,7 +75,7 @@ void Design::walkModuleInstances(const Symbol *sym) {
         // Walk past structures that may occur between instance bodies and instantiations.
         case SymbolKind::GenerateBlock: {
             auto genBlock = static_cast<const GenerateBlockSymbol *>(sym);
-            if (genBlock->isInstantiated)
+            if (!genBlock->isUninstantiated)
                 for (auto &member: genBlock->members())
                     walkModuleInstances(&member);
             break;

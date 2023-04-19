@@ -51,14 +51,14 @@ cxxopts::Options genCmdOpts () {
 
 
 template<typename Stream, typename String>
-void writeToFile(Stream& os, string_view fileName, String contents) {
+void writeToFile(Stream& os, std::string_view fileName, String contents) {
     os.write(contents.data(), contents.size());
     os.flush();
     if (!os)
         throw std::runtime_error(fmt::format("Unable to write AST to '{}'", fileName));
 }
 
-void writeToFile(string_view fileName, string_view contents) {
+void writeToFile(std::string_view fileName, std::string_view contents) {
     if (fileName == "-") {
         writeToFile(std::cout, "stdout", contents);
     }
@@ -83,7 +83,8 @@ int driverMain(int argc, char** argv) {
         return 1;
     }
     if (cmdOptsRes.count("help")) {
-        fmt::print(cmdOpts.help());
+        const auto& helpOptions = cmdOpts.help();
+        fmt::print("{}\n", helpOptions);
         return 0;
     }
     if (cmdOptsRes.count("timetrace"))
