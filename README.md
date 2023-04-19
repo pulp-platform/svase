@@ -63,3 +63,10 @@ make
 ```bash
 svase snitch test2.v test/build/snitch_cluster_wrapper.pickle.sv
 ```
+
+
+## Format inplace offline to match linter
+
+```bash
+clang-format -style=LLVM -i src/*.cpp include/svase/*.h
+```

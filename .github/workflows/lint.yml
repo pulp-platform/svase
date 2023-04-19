@@ -13,5 +13,5 @@ jobs:
         uses: DoozyX/clang-format-lint-action@v0.14
         with:
           extensions: "c,h,cpp"
-          clangFormatVersion: 14
-          style: "{IndentWidth: 4, ColumnLimit: 120, AlignEscapedNewlines: DontAlign}"
+          clangFormatVersion: 12
+          style: LLVM

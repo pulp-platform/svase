@@ -212,7 +212,7 @@ int driverMain(int argc, char **argv) {
   // beforehand!
   writeToFile(cmdOptsRes["out"].as<std::string>(), postBuffers.back().second);
   //} catch (const std::exception e) {diag.log(DiagSev::Fatal, e.what()); ok =
-  //false;} if (!ok) return 8;
+  // false;} if (!ok) return 8;
 
   diag.logStage("DONE");
 
