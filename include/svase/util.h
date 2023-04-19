@@ -9,7 +9,6 @@
 
 #include <cassert>
 #include <unordered_map>
-#include "span.hpp"
 #include "fmt/format.h"
 #include "slang/ast/symbols/InstanceSymbols.h"
 #include "slang/ast/symbols/ParameterSymbols.h"
@@ -64,9 +63,9 @@ static inline const Symbol *getScopeMember(const Scope& scope, std::string_view 
 
 /// Get a fixed-sized array on a heap; useful whenever `SmallVector`s become too large for the stack.
 template <typename T>
-static inline nonstd::span<T> allocArray(const size_t size, BumpAllocator& alloc) {
+static inline std::span<T> allocArray(const size_t size, BumpAllocator& alloc) {
     auto base = (T *) (void *) alloc.allocate(size * sizeof(T), sizeof(T));
-    return nonstd::span<T>(base, size);
+    return std::span<T>(base, size);
 }
 
 /// Get a comparable index (without collisions) for unique source locations across buffers.

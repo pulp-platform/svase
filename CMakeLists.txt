@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 project(svase)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 # Handle local prefix (TODO: parameterize)
 set(DEP_INSTALL_DIR deps/install)
