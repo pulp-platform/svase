@@ -119,7 +119,6 @@ private:
   /// Wrap a Pseudomember in a trivial ifGenerate, possibly with a block, to
   /// make it a standalone member.
   MemberSyntax *wrapInIfGen(MemberSyntax &membSyn,
-                            std::string_view label = ""sv,
                             MemberSyntax *genvar = nullptr);
 
   /// Get a `beginName` label from whatever may be the block's canonical name
@@ -154,8 +153,7 @@ private:
 
   /// Unroll a `LoopGenerateSyntax`, looking up its symbol in the compilation.
   MemberSyntax *unrollGenSyntax(const LoopGenerateSyntax &loopSyn,
-                                const Scope &scope,
-                                NamedBlockClauseSyntax *beginName = nullptr);
+                                const Scope &scope);
 
   /// Unroll a `GenerateRegionSyntax`; these have no real effect on the design,
   /// but must be walked.
@@ -168,7 +166,8 @@ private:
   /// TODO: what about instance arrays? are we even properly tracking those in
   /// `Design`?
   MemberSyntax *unrollGenSyntax(const HierarchyInstantiationSyntax &instSyn,
-                                const Scope &scope);
+                                const Scope &scope,
+                                const Scope *globalScope = nullptr);
 
   /// Handle a generic generate construct iff it is inside a module.
   template <typename T> void handleGenerate(const T &syn);

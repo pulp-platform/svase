@@ -127,8 +127,6 @@ DataTypeSyntax *ParameterRewriter::mangleEnumTypes(DataTypeSyntax &typeSyn) {
     for (auto member : enumSyn.members) {
       if (!firstIter) {
         newMembArr[i++] = *alloc.emplace<TokenOrSyntax>(makeComma());
-        auto &membValExpr =
-            member->initializer->expr->as<IntegerVectorExpressionSyntax>();
       }
       firstIter = false;
       auto newNameStr = std::string_view(*strAlloc.emplace(
@@ -312,7 +310,6 @@ IfGenerateSyntax *GenerateRewriter::wrapMemberInIfGen(MemberSyntax &membSyn,
 }
 
 MemberSyntax *GenerateRewriter::wrapInIfGen(MemberSyntax &membSyn,
-                                            std::string_view label,
                                             MemberSyntax *genvar) {
   // Do not wrap empty members to avoid unnecessary block spawning
   if (membSyn.kind == SyntaxKind::EmptyMember)
@@ -354,14 +351,13 @@ GenerateRewriter::unrollGenSyntax(MemberSyntax &membSyn, const Scope &scope,
     return unrollGenSyntax(membSyn.as<CaseGenerateSyntax>(), genScope,
                            beginName);
   case SyntaxKind::LoopGenerate:
-    return unrollGenSyntax(membSyn.as<LoopGenerateSyntax>(), genScope,
-                           beginName);
+    return unrollGenSyntax(membSyn.as<LoopGenerateSyntax>(), genScope);
   case SyntaxKind::GenerateRegion:
     return unrollGenSyntax(membSyn.as<GenerateRegionSyntax>(), genScope,
                            beginName);
   case SyntaxKind::HierarchyInstantiation:
     return unrollGenSyntax(membSyn.as<HierarchyInstantiationSyntax>(),
-                           genScope);
+                           genScope, globalScope);
   case SyntaxKind::GenerateBlock: {
     // If the child is a block, the parent *should* set the block symbol
     if (!blockSym)
@@ -407,7 +403,7 @@ GenerateRewriter::unrollGenSyntax(const IfGenerateSyntax &ifSyn,
     newSyn = unrollGenSyntax(elseSyn, scope, beginName,
                              matchInstGenBlock(&elseSyn, scope));
   }
-  return wrapInIfGen(*newSyn, fmt::format("genif{}", ++uniqCounter));
+  return wrapInIfGen(*newSyn);
 }
 
 MemberSyntax *
@@ -436,7 +432,7 @@ GenerateRewriter::unrollGenSyntax(const CaseGenerateSyntax &caseSyn,
     // We found the one instantiated (matching) case --> wrap and return
     // unrolled block or member
     if (newSyn->kind != SyntaxKind::EmptyMember)
-      return wrapInIfGen(*newSyn, fmt::format("gencase{}", ++uniqCounter));
+      return wrapInIfGen(*newSyn);
   }
   // None of the cases are instantiated (i.e. matched) --> return *unwrapped*
   // empty member
@@ -445,8 +441,7 @@ GenerateRewriter::unrollGenSyntax(const CaseGenerateSyntax &caseSyn,
 
 MemberSyntax *
 GenerateRewriter::unrollGenSyntax(const LoopGenerateSyntax &loopSyn,
-                                  const Scope &scope,
-                                  NamedBlockClauseSyntax *beginName) {
+                                  const Scope &scope) {
   // Get syntax and symbol
   auto topMembSyn = loopSyn.block;
   auto topArraySym = synToSym<GenerateBlockArraySymbol>(*topMembSyn, scope);

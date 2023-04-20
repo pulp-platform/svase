@@ -130,7 +130,7 @@ int driverMain(int argc, char **argv) {
     diag.logStage("PREPROCESS");
     Preprocessor preproc(slangDriver.buffers, preBuffers, diag);
     preproc.preprocess();
-  } catch (const std::exception e) {
+  } catch (const std::exception &e) {
     diag.log(DiagSev::Fatal, e.what());
     ok = false;
   }
@@ -142,7 +142,7 @@ int driverMain(int argc, char **argv) {
     diag.logStage("PARSE");
     TimeTraceScope timeScope("parse"sv, ""sv);
     ok = slangDriver.parseAllSources();
-  } catch (const std::exception e) {
+  } catch (const std::exception &e) {
     diag.log(DiagSev::Fatal, e.what());
     ok = false;
   }
@@ -157,7 +157,7 @@ int driverMain(int argc, char **argv) {
     compilation = slangDriver.createCompilation();
     ok = slangDriver.reportCompilation(*compilation, true);
 
-  } catch (const std::exception e) {
+  } catch (const std::exception &e) {
     diag.log(DiagSev::Fatal, e.what());
     ok = false;
   }
@@ -181,10 +181,7 @@ int driverMain(int argc, char **argv) {
       UniqueModuleRewriter(*design, alloc, strAlloc, diag).transform(synTree);
   synTree =
       ParameterRewriter(*design, alloc, strAlloc, diag).transform(synTree);
-  // synTree = GenerateRewriter(*design, alloc, strAlloc,
-  // diag).transform(synTree);
-  // synTree = DefaultAssignmentRewriter(*design, alloc, strAlloc, diag)
-  //               .transform(synTree);
+  synTree = GenerateRewriter(*design, alloc, strAlloc, diag).transform(synTree);
   // } catch (const std::exception e) {diag.log(DiagSev::Fatal, e.what()); ok =
   // false;}
   // if (!ok) return 6;
@@ -198,7 +195,7 @@ int driverMain(int argc, char **argv) {
     // TODO: proper lib handling
     postBuffers.emplace_back(cmdOptsRes["top"].as<std::string>(),
                              synTree->root().toString());
-  } catch (const std::exception e) {
+  } catch (const std::exception &e) {
     diag.log(DiagSev::Fatal, e.what());
     ok = false;
   }

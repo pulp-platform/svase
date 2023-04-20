@@ -40,7 +40,7 @@ public:
   DesignUniqueModule() = delete;
 
   DesignUniqueModule(const InstanceSymbol *const symbol, size_t id)
-      : id(id), instances() {
+      : instances(), id(id) {
     addInstance(symbol);
   }
 
