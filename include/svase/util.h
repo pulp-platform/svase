@@ -111,14 +111,15 @@ template <typename TSym>
 static inline const TSym *synToSym(const SyntaxNode &syn, const Scope &scope) {
   for (auto &memSym : scope.membersOfType<TSym>()) {
     size_t memIdx = getSymSourceLocIdx(memSym);
-    if constexpr (std::is_same_v<TSym, GenerateBlockSymbol> || 
+    if constexpr (std::is_same_v<TSym, GenerateBlockSymbol> ||
                   std::is_same_v<TSym, GenerateBlockArraySymbol>) {
       // We account here for a difference that appears
       // The SyntaxNode start with "<name>"
       // The Symbol location is at the "begin : <name>"" so we need to skip the
       // "begin :" part. We do that by converting it to a SyntaxNode
       auto memSyn = memSym.getSyntax();
-      // can be called for a loopGenerate and for that we do not want to move the matching
+      // can be called for a loopGenerate and for that we do not want to move
+      // the matching
       if (!memSyn) {
         printf("Warning: Symbol %s has no syntax.\n", memSym.name.data());
         continue;
@@ -134,8 +135,8 @@ static inline const TSym *synToSym(const SyntaxNode &syn, const Scope &scope) {
       //   auto child = memSyn->childNode(i);
       //   if (child) {
       //     if (child->isEquivalentTo(syn)) {
-      //       fmt::print("retrun due to equivalence of child {}\n", syn.toString());
-      //       fmt::print("returned {}\n", memSyn->toString());
+      //       fmt::print("retrun due to equivalence of child {}\n",
+      //       syn.toString()); fmt::print("returned {}\n", memSyn->toString());
       //       fmt::print("child {}\n", child->toString());
       //       return &memSym.template as<TSym>();
       //     }
@@ -145,11 +146,15 @@ static inline const TSym *synToSym(const SyntaxNode &syn, const Scope &scope) {
       if (memSyn->kind == syn.kind) {
         memIdx = getSynSourceLocIdx(*memSyn);
       } else {
-        printf("This type goes through %d\n", static_cast<std::underlying_type<SyntaxKind>::type>(memSyn->kind));
-        printf("Comparision of %s and %s\n", memSyn->toString().c_str(), syn.toString().c_str());
+        printf(
+            "This type goes through %d\n",
+            static_cast<std::underlying_type<SyntaxKind>::type>(memSyn->kind));
+        printf("Comparision of %s and %s\n", memSyn->toString().c_str(),
+               syn.toString().c_str());
         printf("Values %zu and %zu\n", memIdx, getSynSourceLocIdx(syn));
-        
-        if (memIdx != getSynSourceLocIdx(syn) && memSyn->kind == SyntaxKind::LoopGenerate) {
+
+        if (memIdx != getSynSourceLocIdx(syn) &&
+            memSyn->kind == SyntaxKind::LoopGenerate) {
           if (memIdx - 8 == getSynSourceLocIdx(syn)) {
             return &memSym.template as<TSym>();
           } else if (memIdx - 7 == getSynSourceLocIdx(syn)) {
@@ -158,7 +163,6 @@ static inline const TSym *synToSym(const SyntaxNode &syn, const Scope &scope) {
         }
       }
     }
-
 
     if (memIdx == getSynSourceLocIdx(syn))
       return &memSym.template as<TSym>();

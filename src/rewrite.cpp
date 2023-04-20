@@ -339,7 +339,7 @@ MemberSyntax *
 GenerateRewriter::unrollGenSyntax(MemberSyntax &membSyn, const Scope &scope,
                                   NamedBlockClauseSyntax *beginName,
                                   const GenerateBlockSymbol *blockSym,
-                                  const Scope* globalScope) {
+                                  const Scope *globalScope) {
   // After generate, skip into its possible block scope unless an actual block
   // syntax exists.
   auto &genScope = blockSym ? *blockSym : scope;
@@ -357,9 +357,10 @@ GenerateRewriter::unrollGenSyntax(MemberSyntax &membSyn, const Scope &scope,
     return unrollGenSyntax(membSyn.as<GenerateRegionSyntax>(), genScope,
                            beginName);
   case SyntaxKind::HierarchyInstantiation:
-    fmt::print("{}", fmt::format("blockSym {}, {}\n", fmt::ptr(blockSym), fmt::ptr(&scope)));
-    return unrollGenSyntax(membSyn.as<HierarchyInstantiationSyntax>(),
-                           genScope, globalScope);
+    fmt::print("{}", fmt::format("blockSym {}, {}\n", fmt::ptr(blockSym),
+                                 fmt::ptr(&scope)));
+    return unrollGenSyntax(membSyn.as<HierarchyInstantiationSyntax>(), genScope,
+                           globalScope);
   case SyntaxKind::GenerateBlock: {
     // If the child is a block, the parent *should* set the block symbol
     if (!blockSym)
@@ -451,7 +452,7 @@ GenerateRewriter::unrollGenSyntax(const LoopGenerateSyntax &loopSyn,
   if (!topArraySym)
     diag.log(DiagSev::Fatal,
              "Could not find symbol for loop generate construct", loopSyn);
-  
+
   if (topArraySym->name == "gen_word") {
     fmt::print("hitter\n");
   }
@@ -465,7 +466,8 @@ GenerateRewriter::unrollGenSyntax(const LoopGenerateSyntax &loopSyn,
   // Iterate over instantiated blocks and collect unrolled clones with defparams
   size_t i = 0;
   for (auto &entry : topArraySym->entries) {
-    fmt::print("{}", fmt::format("entry {}, {}\n", entry->name, topArraySym->name));
+    fmt::print("{}",
+               fmt::format("entry {}, {}\n", entry->name, topArraySym->name));
   }
   for (auto &entry : topArraySym->entries) {
     // Skip uninstantiated members
@@ -484,9 +486,10 @@ GenerateRewriter::unrollGenSyntax(const LoopGenerateSyntax &loopSyn,
     NamedBlockClauseSyntax *subBlockName = nullptr;
     if (renameSubs)
       subBlockName = makeBlockBeginName(fmt::format("__{}", arrayIdxStr));
-    newMembers[i++] = wrapInIfGen(
-        *unrollGenSyntax(*topMembSyn, *topArraySym, subBlockName, entry, topArraySym->getParentScope()),
-        loopGenvarSyn);
+    newMembers[i++] =
+        wrapInIfGen(*unrollGenSyntax(*topMembSyn, *topArraySym, subBlockName,
+                                     entry, topArraySym->getParentScope()),
+                    loopGenvarSyn);
   }
   // Determine top block name
   std::string topBlockName = fmt::format("genfor{}", ++uniqCounter);
@@ -519,16 +522,17 @@ GenerateRewriter::unrollGenSyntax(const GenerateRegionSyntax &regSyn,
 
 MemberSyntax *
 GenerateRewriter::unrollGenSyntax(const HierarchyInstantiationSyntax &instSyn,
-                                  const Scope &scope, const Scope *globalScope) {
+                                  const Scope &scope,
+                                  const Scope *globalScope) {
   // We use the first instance symbol as a representative to get the unique
   // module
   auto name = instSyn.getFirstToken().valueText();
   fmt::print("name {}\n", name);
-  auto instSymGeneric = 
+  auto instSymGeneric =
       getScopeMember(scope, (*instSyn.instances.begin())->decl->name.rawText());
   if (!instSymGeneric && globalScope)
-    instSymGeneric = 
-      getScopeMember(*globalScope, (*instSyn.instances.begin())->decl->name.rawText());
+    instSymGeneric = getScopeMember(
+        *globalScope, (*instSyn.instances.begin())->decl->name.rawText());
   if (!instSymGeneric)
     diag.log(DiagSev::Fatal, "Could not find compilation symbol for instance",
              instSyn);
