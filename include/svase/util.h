@@ -17,6 +17,7 @@
 #include "slang/syntax/SyntaxNode.h"
 #include "slang/util/BumpAllocator.h"
 #include <cassert>
+#include <regex>
 #include <unordered_map>
 
 namespace svase {
@@ -124,24 +125,6 @@ static inline const TSym *synToSym(const SyntaxNode &syn, const Scope &scope) {
         printf("Warning: Symbol %s has no syntax.\n", memSym.name.data());
         continue;
       }
-      // was created by this SyntaxNode in the first place
-      // if (memSyn->isEquivalentTo(syn)){
-      //   printf("retrun due to equivalence\n");
-      //   return &memSym.template as<TSym>();
-      // }
-      // // if this is not the case check childrens of the SyntaxNode
-      // auto amountOfChildren = memSyn->getChildCount();
-      // for (size_t i = 0; i < amountOfChildren; i++) {
-      //   auto child = memSyn->childNode(i);
-      //   if (child) {
-      //     if (child->isEquivalentTo(syn)) {
-      //       fmt::print("retrun due to equivalence of child {}\n",
-      //       syn.toString()); fmt::print("returned {}\n", memSyn->toString());
-      //       fmt::print("child {}\n", child->toString());
-      //       return &memSym.template as<TSym>();
-      //     }
-      //   }
-      // }
 
       if (memSyn->kind == syn.kind) {
         memIdx = getSynSourceLocIdx(*memSyn);
@@ -155,9 +138,18 @@ static inline const TSym *synToSym(const SyntaxNode &syn, const Scope &scope) {
 
         if (memIdx != getSynSourceLocIdx(syn) &&
             memSyn->kind == SyntaxKind::LoopGenerate) {
-          if (memIdx - 8 == getSynSourceLocIdx(syn)) {
-            return &memSym.template as<TSym>();
-          } else if (memIdx - 7 == getSynSourceLocIdx(syn)) {
+          std::regex reBegin(R"(begin\s*:\s*)");
+          std::smatch match;
+          std::string symbolStr = syn.toString();
+          auto start = symbolStr.cbegin();
+          size_t beginLength = 0;
+          while (std::regex_search(start, symbolStr.cend(), match, reBegin)) {
+            if (beginLength == 0) {
+              beginLength = match.length();
+              break;
+            }
+          }
+          if (memIdx - beginLength == getSynSourceLocIdx(syn)) {
             return &memSym.template as<TSym>();
           }
         }
