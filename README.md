@@ -64,6 +64,14 @@ make
 svase snitch test2.v test/build/snitch_cluster_wrapper.pickle.sv
 ```
 
+## Build current tests
+
+```bash
+cd test
+make
+cd ..
+./run_test.sh
+```
 
 ## Format inplace offline to match linter
 
