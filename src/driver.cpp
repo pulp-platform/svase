@@ -7,6 +7,7 @@
 
 #include "cxxopts.hpp"
 #include <cstdio>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
@@ -39,8 +40,11 @@ cxxopts::Options genCmdOpts() {
       // Optional arguments
       ("l,lib", "Output library of individual modules",
        cxxopts::value<bool>()->implicit_value("false")) // TODO
-      ("z,compress", "Compress output file or library using Gzip",
-       cxxopts::value<bool>()->implicit_value("false")) // TODO
+      ("split",
+       "write all files in split files", // TODO add option to pass a path
+       cxxopts::value<bool>()->implicit_value("false"))(
+          "z,compress", "Compress output file or library using Gzip",
+          cxxopts::value<bool>()->implicit_value("false")) // TODO
       ("s,slang-argfile", "Argument file overriding Slang default options",
        cxxopts::value<std::string>())(
           "S,slang-args", "Argument string overriding Slang default options",
@@ -189,12 +193,32 @@ int driverMain(int argc, char **argv) {
   // TODO: Postprocess syntax tree into writable buffers, one per root unit
   // member
   std::vector<std::pair<std::string, std::string>> postBuffers;
+  std::vector<std::pair<std::string, std::string>> postBuffersFiles;
   try {
     diag.logStage("POSTPROCESS");
     TimeTraceScope timeScope("postproc"sv, ""sv);
     // TODO: proper lib handling
     postBuffers.emplace_back(cmdOptsRes["top"].as<std::string>(),
                              synTree->root().toString());
+    for (size_t i = 0; i < synTree->root().childNode(0)->getChildCount(); i++) {
+      auto child = synTree->root().childNode(0)->childNode(i);
+      if (child) {
+        fmt::print("root child \n{}\n", child->toString().substr(0, 100));
+        fmt::print("syntax kind {}\n", (int)child->kind);
+        std::string startString = "unknown";
+        if (child->kind == SyntaxKind::ModuleDeclaration) {
+          startString = "module";
+        } else if (child->kind == SyntaxKind::PackageDeclaration) {
+          startString = "package";
+        } else if (child->kind == SyntaxKind::InterfaceDeclaration) {
+          startString = "interface";
+        } else if (child->kind == SyntaxKind::ClassDeclaration) {
+          startString = "class";
+        }
+        postBuffersFiles.emplace_back(fmt::format("{}_{}", startString, i),
+                                      child->toString());
+      }
+    }
   } catch (const std::exception &e) {
     diag.log(DiagSev::Fatal, e.what());
     ok = false;
@@ -208,6 +232,18 @@ int driverMain(int argc, char **argv) {
   // TODO: library handling and such; guard that out exists, is legal
   // beforehand!
   writeToFile(cmdOptsRes["out"].as<std::string>(), postBuffers.back().second);
+  std::string defaultPath = "splitted_output";
+  if (cmdOptsRes.count("split")) {
+    if (!std::filesystem::is_directory(defaultPath) ||
+        !std::filesystem::exists(defaultPath)) {
+      std::filesystem::create_directory(defaultPath);
+    }
+    for (auto buffer : postBuffersFiles) {
+      writeToFile(fmt::format("{}/{}.sv", defaultPath, buffer.first),
+                  buffer.second);
+    }
+  }
+
   //} catch (const std::exception e) {diag.log(DiagSev::Fatal, e.what()); ok =
   // false;} if (!ok) return 8;
 
