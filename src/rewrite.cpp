@@ -338,7 +338,8 @@ GenerateRewriter::makeBlockBeginName(std::string_view name) {
 MemberSyntax *
 GenerateRewriter::unrollGenSyntax(MemberSyntax &membSyn, const Scope &scope,
                                   NamedBlockClauseSyntax *beginName,
-                                  const GenerateBlockSymbol *blockSym) {
+                                  const GenerateBlockSymbol *blockSym,
+                                  const Scope* globalScope) {
   // After generate, skip into its possible block scope unless an actual block
   // syntax exists.
   auto &genScope = blockSym ? *blockSym : scope;
@@ -356,6 +357,7 @@ GenerateRewriter::unrollGenSyntax(MemberSyntax &membSyn, const Scope &scope,
     return unrollGenSyntax(membSyn.as<GenerateRegionSyntax>(), genScope,
                            beginName);
   case SyntaxKind::HierarchyInstantiation:
+    fmt::print("{}", fmt::format("blockSym {}, {}\n", fmt::ptr(blockSym), fmt::ptr(&scope)));
     return unrollGenSyntax(membSyn.as<HierarchyInstantiationSyntax>(),
                            genScope, globalScope);
   case SyntaxKind::GenerateBlock: {
@@ -443,11 +445,16 @@ MemberSyntax *
 GenerateRewriter::unrollGenSyntax(const LoopGenerateSyntax &loopSyn,
                                   const Scope &scope) {
   // Get syntax and symbol
+  fmt::print("test {}\n", loopSyn.toString());
   auto topMembSyn = loopSyn.block;
   auto topArraySym = synToSym<GenerateBlockArraySymbol>(*topMembSyn, scope);
   if (!topArraySym)
     diag.log(DiagSev::Fatal,
              "Could not find symbol for loop generate construct", loopSyn);
+  
+  if (topArraySym->name == "gen_word") {
+    fmt::print("hitter\n");
+  }
   // Allocate member array. We will later wrap them in an if-generate block
   auto newMembers =
       allocArray<MemberSyntax *>(topArraySym->entries.size(), alloc);
@@ -457,6 +464,9 @@ GenerateRewriter::unrollGenSyntax(const LoopGenerateSyntax &loopSyn,
   bool renameSubs = (topMembSyn->kind == SyntaxKind::GenerateBlock);
   // Iterate over instantiated blocks and collect unrolled clones with defparams
   size_t i = 0;
+  for (auto &entry : topArraySym->entries) {
+    fmt::print("{}", fmt::format("entry {}, {}\n", entry->name, topArraySym->name));
+  }
   for (auto &entry : topArraySym->entries) {
     // Skip uninstantiated members
     if (entry->isUninstantiated) {
@@ -475,7 +485,7 @@ GenerateRewriter::unrollGenSyntax(const LoopGenerateSyntax &loopSyn,
     if (renameSubs)
       subBlockName = makeBlockBeginName(fmt::format("__{}", arrayIdxStr));
     newMembers[i++] = wrapInIfGen(
-        *unrollGenSyntax(*topMembSyn, *topArraySym, subBlockName, entry), ""sv,
+        *unrollGenSyntax(*topMembSyn, *topArraySym, subBlockName, entry, topArraySym->getParentScope()),
         loopGenvarSyn);
   }
   // Determine top block name
@@ -509,11 +519,16 @@ GenerateRewriter::unrollGenSyntax(const GenerateRegionSyntax &regSyn,
 
 MemberSyntax *
 GenerateRewriter::unrollGenSyntax(const HierarchyInstantiationSyntax &instSyn,
-                                  const Scope &scope) {
+                                  const Scope &scope, const Scope *globalScope) {
   // We use the first instance symbol as a representative to get the unique
   // module
-  auto instSymGeneric =
+  auto name = instSyn.getFirstToken().valueText();
+  fmt::print("name {}\n", name);
+  auto instSymGeneric = 
       getScopeMember(scope, (*instSyn.instances.begin())->decl->name.rawText());
+  if (!instSymGeneric && globalScope)
+    instSymGeneric = 
+      getScopeMember(*globalScope, (*instSyn.instances.begin())->decl->name.rawText());
   if (!instSymGeneric)
     diag.log(DiagSev::Fatal, "Could not find compilation symbol for instance",
              instSyn);
@@ -590,17 +605,17 @@ void DefaultAssignmentRewriter::handle(
     printf(" type %s\n", type->toString().c_str());
     // has type infront of it
     auto amountOfChildren = pd.getChildCount();
-    printf("childs %d\n", amountOfChildren);
-    int i = 0;
+    printf("childs %ld\n", amountOfChildren);
+    long unsigned int i = 0;
     bool containsDefault = false;
     while (i < amountOfChildren) {
       auto child = pd.getChild(i);
-      printf("i %d, %d\n", i, child.isNode());
+      printf("i %ld, %d\n", i, child.isNode());
       try {
         auto node = child.node();
         // TODO: should be rewritten with visitor but now we have private
         // function issues
-        printf(" %d, %s\n", i, node->toString().c_str());
+        printf(" %ld, %s\n", i, node->toString().c_str());
         if (node->isKind(SyntaxKind::StructuredAssignmentPattern)) {
           // TODO: this is very ugly and should be done with a visitor
           int index_str = node->toString().find("default");
@@ -609,7 +624,7 @@ void DefaultAssignmentRewriter::handle(
           }
         }
       } catch (...) {
-        printf("not a node %d (can be ignored)\n", i);
+        printf("not a node %ld (can be ignored)\n", i);
       }
       i++;
     }

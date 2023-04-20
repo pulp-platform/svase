@@ -133,7 +133,8 @@ private:
   /// constructs or instances as they are.
   MemberSyntax *unrollGenSyntax(MemberSyntax &membSyn, const Scope &scope,
                                 NamedBlockClauseSyntax *beginName = nullptr,
-                                const GenerateBlockSymbol *blockSym = nullptr);
+                                const GenerateBlockSymbol *blockSym = nullptr,
+                                const Scope *globalScope = nullptr);
 
   /// Unroll a `GenerateBlockSyntax`, looking up its symbol in the compilation.
   MemberSyntax *
@@ -176,11 +177,8 @@ public:
   using DesignRewriter::DesignRewriter;
 
   void handle(const IfGenerateSyntax &syn);
-
   void handle(const LoopGenerateSyntax &syn);
-
   void handle(const CaseGenerateSyntax &syn);
-
   void handle(const GenerateRegionSyntax &syn);
 
   void handle(const HierarchyInstantiationSyntax &syn);
