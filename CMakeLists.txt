@@ -9,6 +9,7 @@ set(CMAKE_PREFIX_PATH ${DEP_INSTALL_DIR})
 link_directories(${DEP_INSTALL_DIR}/lib64)
 include_directories(${DEP_INSTALL_DIR}/include)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Werror")
 # Dependencies
 find_package(slang REQUIRED)
 find_package(fmt REQUIRED)
