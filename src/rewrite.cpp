@@ -357,8 +357,6 @@ GenerateRewriter::unrollGenSyntax(MemberSyntax &membSyn, const Scope &scope,
     return unrollGenSyntax(membSyn.as<GenerateRegionSyntax>(), genScope,
                            beginName);
   case SyntaxKind::HierarchyInstantiation:
-    fmt::print("{}", fmt::format("blockSym {}, {}\n", fmt::ptr(blockSym),
-                                 fmt::ptr(&scope)));
     return unrollGenSyntax(membSyn.as<HierarchyInstantiationSyntax>(), genScope,
                            globalScope);
   case SyntaxKind::GenerateBlock: {
@@ -446,16 +444,12 @@ MemberSyntax *
 GenerateRewriter::unrollGenSyntax(const LoopGenerateSyntax &loopSyn,
                                   const Scope &scope) {
   // Get syntax and symbol
-  fmt::print("test {}\n", loopSyn.toString());
   auto topMembSyn = loopSyn.block;
   auto topArraySym = synToSym<GenerateBlockArraySymbol>(*topMembSyn, scope);
   if (!topArraySym)
     diag.log(DiagSev::Fatal,
              "Could not find symbol for loop generate construct", loopSyn);
 
-  if (topArraySym->name == "gen_word") {
-    fmt::print("hitter\n");
-  }
   // Allocate member array. We will later wrap them in an if-generate block
   auto newMembers =
       allocArray<MemberSyntax *>(topArraySym->entries.size(), alloc);
@@ -465,10 +459,6 @@ GenerateRewriter::unrollGenSyntax(const LoopGenerateSyntax &loopSyn,
   bool renameSubs = (topMembSyn->kind == SyntaxKind::GenerateBlock);
   // Iterate over instantiated blocks and collect unrolled clones with defparams
   size_t i = 0;
-  for (auto &entry : topArraySym->entries) {
-    fmt::print("{}",
-               fmt::format("entry {}, {}\n", entry->name, topArraySym->name));
-  }
   for (auto &entry : topArraySym->entries) {
     // Skip uninstantiated members
     if (entry->isUninstantiated) {
@@ -526,8 +516,6 @@ GenerateRewriter::unrollGenSyntax(const HierarchyInstantiationSyntax &instSyn,
                                   const Scope *globalScope) {
   // We use the first instance symbol as a representative to get the unique
   // module
-  auto name = instSyn.getFirstToken().valueText();
-  fmt::print("name {}\n", name);
   auto instSymGeneric =
       getScopeMember(scope, (*instSyn.instances.begin())->decl->name.rawText());
   if (!instSymGeneric && globalScope)

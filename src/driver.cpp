@@ -200,23 +200,31 @@ int driverMain(int argc, char **argv) {
     // TODO: proper lib handling
     postBuffers.emplace_back(cmdOptsRes["top"].as<std::string>(),
                              synTree->root().toString());
+    int moduleAmount = 0, packageAmount = 0, interfaceAmount = 0,
+        classAmount = 0, unknownAmount = 0;
     for (size_t i = 0; i < synTree->root().childNode(0)->getChildCount(); i++) {
       auto child = synTree->root().childNode(0)->childNode(i);
       if (child) {
-        fmt::print("root child \n{}\n", child->toString().substr(0, 100));
-        fmt::print("syntax kind {}\n", (int)child->kind);
-        std::string startString = "unknown";
         if (child->kind == SyntaxKind::ModuleDeclaration) {
-          startString = "module";
+          postBuffersFiles.emplace_back(
+              fmt::format("{}_{}", "module", moduleAmount++),
+              child->toString());
         } else if (child->kind == SyntaxKind::PackageDeclaration) {
-          startString = "package";
+          postBuffersFiles.emplace_back(
+              fmt::format("{}_{}", "package", packageAmount++),
+              child->toString());
         } else if (child->kind == SyntaxKind::InterfaceDeclaration) {
-          startString = "interface";
+          postBuffersFiles.emplace_back(
+              fmt::format("{}_{}", "interface", interfaceAmount++),
+              child->toString());
         } else if (child->kind == SyntaxKind::ClassDeclaration) {
-          startString = "class";
+          postBuffersFiles.emplace_back(
+              fmt::format("{}_{}", "class", classAmount++), child->toString());
+        } else {
+          postBuffersFiles.emplace_back(
+              fmt::format("{}_{}", "unknown", unknownAmount++),
+              child->toString());
         }
-        postBuffersFiles.emplace_back(fmt::format("{}_{}", startString, i),
-                                      child->toString());
       }
     }
   } catch (const std::exception &e) {

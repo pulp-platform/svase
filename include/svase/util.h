@@ -129,13 +129,6 @@ static inline const TSym *synToSym(const SyntaxNode &syn, const Scope &scope) {
       if (memSyn->kind == syn.kind) {
         memIdx = getSynSourceLocIdx(*memSyn);
       } else {
-        printf(
-            "This type goes through %d\n",
-            static_cast<std::underlying_type<SyntaxKind>::type>(memSyn->kind));
-        printf("Comparision of %s and %s\n", memSyn->toString().c_str(),
-               syn.toString().c_str());
-        printf("Values %zu and %zu\n", memIdx, getSynSourceLocIdx(syn));
-
         if (memIdx != getSynSourceLocIdx(syn) &&
             memSyn->kind == SyntaxKind::LoopGenerate) {
           std::regex reBegin(R"(begin\s*:\s*)");
