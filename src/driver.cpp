@@ -186,6 +186,8 @@ int driverMain(int argc, char **argv) {
   synTree =
       ParameterRewriter(*design, alloc, strAlloc, diag).transform(synTree);
   synTree = GenerateRewriter(*design, alloc, strAlloc, diag).transform(synTree);
+  synTree = TypedefDeclarationRewriter(*design, alloc, strAlloc, diag)
+                .transform(synTree);
   // } catch (const std::exception e) {diag.log(DiagSev::Fatal, e.what()); ok =
   // false;}
   // if (!ok) return 6;

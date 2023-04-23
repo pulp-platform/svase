@@ -184,4 +184,22 @@ public:
   void handle(const HierarchyInstantiationSyntax &syn);
 };
 
+class TypedefDeclarationRewriter
+    : public DesignRewriter<TypedefDeclarationRewriter> {
+private:
+  const Symbol *getTypeNameSymOrBail(const TypedefDeclarationSyntax *pd,
+                                     DesignUniqueModule *uniqMod) const;
+
+  template <typename T>
+  void replaceTypeDeclOrBail(std::string declStr, const T &pd);
+
+  DesignUniqueModule *getUniqueModule(const SyntaxNode &pd) const;
+
+public:
+  using DesignRewriter::DesignRewriter;
+
+  // void handle(const ScopedNameSyntax &pd);
+  void handle(const TypedefDeclarationSyntax &pd);
+};
+
 } // namespace svase

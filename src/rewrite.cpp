@@ -580,4 +580,79 @@ void GenerateRewriter::handle(const HierarchyInstantiationSyntax &syn) {
   handleGenerate(syn);
 }
 
+DesignUniqueModule *
+TypedefDeclarationRewriter::getUniqueModule(const SyntaxNode &pd) const {
+  // Obtain module instance from either port list or root (skip if in package or
+  // in some other config)
+  if (!pd.parent)
+    return nullptr;
+  auto modNode = pd.parent;
+  while (modNode->kind != SyntaxKind::ModuleDeclaration && modNode->parent &&
+         modNode->kind != SyntaxKind::Unknown) {
+    modNode = modNode->parent;
+  }
+  if (modNode->kind != SyntaxKind::ModuleDeclaration) {
+    diag.log(DiagSev::Warning,
+             fmt::format(
+                 "type rewrite with no parent found with unhandled parent kind "
+                 "`{}`; left unchanged",
+                 toString(modNode->kind)),
+             pd, true);
+    return nullptr;
+  }
+  // Obtain corresponding unique module
+  auto &modSyn = modNode->as<ModuleDeclarationSyntax>();
+  return design.getUniqueModule(modSyn.header->name.rawText());
+}
+
+const Symbol *TypedefDeclarationRewriter::getTypeNameSymOrBail(
+    const TypedefDeclarationSyntax *pd, DesignUniqueModule *uniqMod) const {
+  auto memberSym =
+      getScopeMember(uniqMod->getInstances().begin()->symbol->body.as<Scope>(),
+                     pd->name.rawText());
+  if (memberSym == nullptr) {
+    diag.log(DiagSev::Note,
+             "ScopedName declaration not found in compilation; left unchanged",
+             *pd, true);
+  }
+  return memberSym;
+}
+
+template <typename T>
+void TypedefDeclarationRewriter::replaceTypeDeclOrBail(std::string declStr,
+                                                       const T &pd) {
+  auto &newPdSyn = parse(declStr);
+  if (newPdSyn.kind != SyntaxKind::TypedefDeclaration) {
+    diag.log(DiagSev::Error,
+             fmt::format(
+                 "misparsed parameter declaration as kind `{}`; left unchanged",
+                 toString(newPdSyn.kind)),
+             pd, true);
+    return;
+  }
+  auto newPdStatement = clone(newPdSyn.as<TypedefDeclarationSyntax>(), alloc);
+  if (newPdStatement) {
+    replace(pd, *newPdStatement);
+  }
+}
+
+void TypedefDeclarationRewriter::handle(const TypedefDeclarationSyntax &pd) {
+  auto uniqMod = getUniqueModule(pd);
+  if (!uniqMod)
+    return;
+  auto memberSym = getTypeNameSymOrBail(&pd, uniqMod);
+  if (!memberSym)
+    return;
+
+  auto typePrinter = TypePrinter();
+  typePrinter.options.skipScopedTypeNames = true;
+  typePrinter.options.fullEnumType = true;
+  auto &paramSym = memberSym->as<TypeAliasType>();
+  auto &type = paramSym.getDeclaredType()->getType().getCanonicalType();
+  typePrinter.append(type);
+  auto declStr = fmt::format("{} {} {};", pd.typedefKeyword.toString(),
+                             typePrinter.toString(), pd.name.toString());
+  typePrinter.clear();
+  replaceTypeDeclOrBail<TypedefDeclarationSyntax>(declStr, pd);
+}
 } // namespace svase
