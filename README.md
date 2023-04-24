@@ -42,3 +42,39 @@ This completely uncouples instances and modules from each other, fully qualifyin
 * [ ] Integrate Snitch Cluster as test
 * [ ] Integrate Cheshire SoC as test
 * [ ] Investigate Occamy Top as test
+
+## Install & Build
+
+```bash
+git clone https://github.com/paulsc96/svase.git
+# install dependencies
+source svase.env
+cd deps
+make
+# build svase
+source svase.env
+mkdir build && cd build
+cmake ..
+make
+```
+
+## Usage
+
+```bash
+svase snitch test2.v test/build/snitch_cluster_wrapper.pickle.sv
+```
+
+## Build current tests
+
+```bash
+cd test
+make
+cd ..
+./run_test.sh
+```
+
+## Format inplace offline to match linter
+
+```bash
+clang-format -style=LLVM -i src/*.cpp include/svase/*.h
+```
