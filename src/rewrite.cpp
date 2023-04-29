@@ -525,8 +525,11 @@ GenerateRewriter::unrollGenSyntax(const HierarchyInstantiationSyntax &instSyn,
     diag.log(DiagSev::Fatal, "Could not find compilation symbol for instance",
              instSyn);
   // Check if this is a black box or non-module; if so, leave it be.
-  if (instSymGeneric->kind == SymbolKind::Unknown)
+  // Uninstantiated modules are also left be, are pad or macros
+  if (instSymGeneric->kind == SymbolKind::Unknown ||
+      instSymGeneric->kind == SymbolKind::UninstantiatedDef) {
     return clone(instSyn, alloc);
+  }
   auto &instSym = instSymGeneric->as<InstanceSymbol>();
   if (!instSym.isModule())
     return clone(instSyn, alloc);
@@ -591,6 +594,8 @@ TypedefDeclarationRewriter::getUniqueModule(const SyntaxNode &pd) const {
          modNode->kind != SyntaxKind::Unknown) {
     modNode = modNode->parent;
   }
+  if (modNode->kind == SyntaxKind::CompilationUnit)
+    return nullptr;
   if (modNode->kind != SyntaxKind::ModuleDeclaration) {
     diag.log(DiagSev::Warning,
              fmt::format(
@@ -612,7 +617,7 @@ const Symbol *TypedefDeclarationRewriter::getTypeNameSymOrBail(
                      pd->name.rawText());
   if (memberSym == nullptr) {
     diag.log(DiagSev::Note,
-             "ScopedName declaration not found in compilation; left unchanged",
+             "getTypeNameSymOrBail not found in compilation; left unchanged",
              *pd, true);
   }
   return memberSym;
