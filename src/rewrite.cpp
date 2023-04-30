@@ -655,8 +655,23 @@ void TypedefDeclarationRewriter::handle(const TypedefDeclarationSyntax &pd) {
   auto &paramSym = memberSym->as<TypeAliasType>();
   auto &type = paramSym.getDeclaredType()->getType().getCanonicalType();
   typePrinter.append(type);
-  auto declStr = fmt::format("{} {} {};", pd.typedefKeyword.toString(),
-                             typePrinter.toString(), pd.name.toString());
+  std::string typeStr = typePrinter.toString();
+  std::string declStr;
+
+  // unpacked types come in the format "type$[dim]"
+  // where the '$' is a placeholder for the name
+  if (type.isUnpackedArray()) {
+    // searching for $[ instead of $ since it might be possible to
+    // have $ appear before the actual placeholder (ie in the type)
+    std::size_t pos = typeStr.find("$[");
+    std::string packedStr = typeStr.substr(0, pos);
+    std::string unpackedStr = typeStr.substr(pos + 1, typeStr.length());
+    declStr = fmt::format("{} {}{} {};", pd.typedefKeyword.toString(),
+                          packedStr, pd.name.toString(), unpackedStr);
+  } else {
+    declStr = fmt::format("{} {} {};", pd.typedefKeyword.toString(), typeStr,
+                          pd.name.toString());
+  }
   typePrinter.clear();
   replaceTypeDeclOrBail<TypedefDeclarationSyntax>(declStr, pd);
 }
