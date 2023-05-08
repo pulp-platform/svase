@@ -1,3 +1,10 @@
+# Copyright (c) 2022 ETH Zurich and University of Bologna.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+
+# Author:  Paul Scheffler <paulsc@iis.ee.ethz.ch>
+
+
 # Repository
 
 idma_build_dir = $(build_dir)/idma

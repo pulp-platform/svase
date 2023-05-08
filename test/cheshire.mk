@@ -1,3 +1,8 @@
+# Copyright (c) 2022 ETH Zurich and University of Bologna.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+
+# Author:  Jannis Schönleber <janniss@iis.ee.ethz.ch>
 
 cheshire_build_dir = $(build_dir)/cheshire
 cheshire_rev = 9b6c99a749cbba857aabe41fec10830ef0c07b56
