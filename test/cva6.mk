@@ -1,3 +1,8 @@
+# Copyright (c) 2022 ETH Zurich and University of Bologna.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+
+# Author:  Jannis Schönleber <janniss@iis.ee.ethz.ch>
 
 
 cva6_build_dir = $(build_dir)/cva6
