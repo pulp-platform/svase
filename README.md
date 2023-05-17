@@ -52,13 +52,11 @@ This project is still considered to be in early development; some parts may not 
 Tested with GCC 11.2.0 and cmake 3.20.2
 
 ```bash
-git clone https://github.com/paulsc96/svase.git
 # install dependencies
 source scripts/svase.env
 cd deps
 make
-# build svase
-source scripts/svase.env
+cd ..
 mkdir build && cd build
 cmake ..
 make
