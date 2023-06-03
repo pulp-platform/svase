@@ -34,8 +34,9 @@ public:
 
   // TODO: glibcxx has known overflow bugs... use an alternative?
   void filterPragmaTranslate(std::string &strBuf, BufferID &id) {
-    std::regex reOff(R"(//\s*pragma\s+translate[_ ]off)");
-    std::regex reOn(R"(//\s*pragma\s+translate[_ ]on)");
+    // match '// pragma translate on/off' and '// synthesis translate on/off'
+    std::regex reOff(R"(\/\/\s*(?:pragma|synthesis)\s+translate[_ ]off)");
+    std::regex reOn(R"(\/\/\s*(?:pragma|synthesis)\s+translate[_ ]on)");
     std::smatch match;
     // Overwrite these matches with whitespace of equal length
     auto start = strBuf.cbegin();
