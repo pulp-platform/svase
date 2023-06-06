@@ -1,12 +1,12 @@
 {
   "configurations": [
     {
-      "name": "(gdb) launch",
+      "name": "const-param-propagate",
       "type": "cppdbg",
       "request": "launch",
       "program": "${workspaceRoot}/build/svase",
       "cwd": "${workspaceRoot}",
-      "args": ["cheshire_top", "cheshire_svase.sv", "test/build/cheshire_top.pickle.sv"],
+      "args": ["test", "test/const-param-propagate/const-param-propagate_out.sv", "test/const-param-propagate/const-param-propagate.sv"],
       "MIMode": "gdb",
       "setupCommands": [
         {

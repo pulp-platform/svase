@@ -61,13 +61,14 @@ private:
   /// null.
   DesignUniqueModule *
   getUniqueModule(const ParameterDeclarationBaseSyntax &pd) const;
+  const Scope *getContainingScope(const ParameterDeclarationSyntax &pd) const;
 
   /// Get the symbol for a parameter declaration syntax or leave it unchanged
   /// and return null.
   template <typename T>
   const Symbol *getParamSymOrBail(const T *pd,
                                   std::vector<std::string> &declStrs,
-                                  DesignUniqueModule *uniqMod) const;
+                                  const Scope &scope) const;
 
   /// Replace a parameter declaration syntax with a new syntax in string form if
   /// it can be parsed as such.
