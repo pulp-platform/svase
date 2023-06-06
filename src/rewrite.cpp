@@ -5,6 +5,8 @@
 // Author:  Paul Scheffler <paulsc@iis.ee.ethz.ch>
 // Gist:    A collection of syntax rewriters leveraging design information.
 
+#include <queue>
+
 #include "svase/rewrite.h"
 #include "svase/util.h"
 
@@ -57,15 +59,14 @@ DesignUniqueModule *ParameterRewriter::getUniqueModule(
   // Obtain module instance from either port list or root (skip if in package or
   // in some other config)
   auto modNode = pd.parent;
-  if (modNode->kind == SyntaxKind::ParameterPortList)
-    modNode = modNode->parent->parent;
-  else if (modNode->kind == SyntaxKind::ParameterDeclarationStatement)
+
+  return nullptr;
+
+  while (modNode->kind != SyntaxKind::ModuleDeclaration && modNode->parent) {
     modNode = modNode->parent;
-  if (modNode->kind == SyntaxKind::PackageDeclaration ||
-      modNode->kind == SyntaxKind::InterfaceDeclaration ||
-      modNode->kind == SyntaxKind::GenerateBlock)
-    return nullptr;
-  else if (modNode->kind != SyntaxKind::ModuleDeclaration) {
+  }
+
+  if (modNode->kind != SyntaxKind::ModuleDeclaration) {
     diag.log(DiagSev::Warning,
              fmt::format("parameter declaration with unhandled parent kind "
                          "`{}`; left unchanged",
@@ -78,14 +79,109 @@ DesignUniqueModule *ParameterRewriter::getUniqueModule(
   return design.getUniqueModule(modSyn.header->name.rawText());
 }
 
+const Scope *ParameterRewriter::getContainingScope(
+    const ParameterDeclarationSyntax &pd) const {
+  // Obtain Scope containing the Symbols of the given SyntaxNode
+  static std::unordered_map<const SyntaxNode *, const Scope *> cache;
+
+  diag.log(DiagSev::Warning,
+           fmt::format("input is "
+                       "`{}`",
+                       toString(pd.kind)),
+           pd, true);
+
+  const SyntaxNode *node = &pd;
+  const Scope *scope = nullptr;
+
+  const SyntaxNode *topNode = nullptr;
+  // go to the top-most Node still in the same scope
+  while (topNode == nullptr && node->parent) {
+    if (node->parent->kind == SyntaxKind::GenerateBlock ||
+        node->parent->kind == SyntaxKind::LoopGenerate ||
+        node->parent->kind == SyntaxKind::ModuleDeclaration) {
+      topNode = node;
+    } else {
+      node = node->parent;
+    }
+  }
+
+  SourceLocation topNodeSourceStart = topNode->sourceRange().start();
+  SourceLocation topNodeSourceEnd = topNode->sourceRange().end();
+
+  // go upwards through the SyntaxNodes
+  // while checking the cache for any known SyntaxNodes
+  while (scope == nullptr && node->parent) {
+    if (cache.count(node) > 0) {
+      scope = cache[node];
+    } else {
+      diag.log(DiagSev::Warning,
+               fmt::format("modNode->parent is"
+                           "`{}`;",
+                           toString(node->parent->kind)),
+               pd, true);
+      node = node->parent;
+
+      if (node->kind == SyntaxKind::ModuleDeclaration) {
+        auto uniqMod = design.getUniqueModule(
+            node->as<ModuleDeclarationSyntax>().header->name.rawText());
+        scope = &(uniqMod->getInstances().begin()->symbol->body.as<Scope>());
+      }
+    }
+  }
+
+  // if we don't have a scope this is not in a uniqueModule
+  if (!scope) {
+    return nullptr;
+  }
+
+  // here we have a scope in which the corresponding symbol should be somewhere
+  std::queue<const Scope *> remainingScopes;
+  remainingScopes.push(scope);
+
+  while (!remainingScopes.empty()) {
+    auto localScope = remainingScopes.front();
+    remainingScopes.pop();
+    // auto test3 =
+    // localScope->lookupName(pd.as<DeclaratorSyntax>().name.rawText());
+
+    for (auto &child : localScope->members()) {
+      auto syntax = child.getSyntax();
+      if (syntax) {
+        diag.log(DiagSev::Warning,
+                 fmt::format("localScope->member is "
+                             "`{}` {};",
+                             toString(syntax->kind), child.isScope()),
+                 *syntax, true);
+      } else {
+        diag.log(DiagSev::Warning,
+                 fmt::format("localScope->member is scope? "
+                             "{};",
+                             child.isScope()),
+                 pd, true);
+      }
+
+      // if the syntax of the child-symbol is our syntax
+      // then we currently are in its containing scope
+      auto childLocation = child.location;
+      if (topNodeSourceStart <= childLocation &&
+          childLocation <= topNodeSourceEnd) {
+        cache[child.getSyntax()] = localScope;
+        return localScope;
+      }
+
+      if (child.isScope()) {
+        remainingScopes.push(&(child.as<Scope>()));
+      }
+    }
+  }
+
+  return nullptr;
+}
+
 template <typename T>
-const Symbol *
-ParameterRewriter::getParamSymOrBail(const T *pd,
-                                     std::vector<std::string> &declStrs,
-                                     DesignUniqueModule *uniqMod) const {
-  auto memberSym =
-      getScopeMember(uniqMod->getInstances().begin()->symbol->body.as<Scope>(),
-                     pd->name.rawText());
+const Symbol *ParameterRewriter::getParamSymOrBail(
+    const T *pd, std::vector<std::string> &declStrs, const Scope &scope) const {
+  auto memberSym = getScopeMember(scope, pd->name.rawText());
   if (memberSym == nullptr) {
     diag.log(DiagSev::Note,
              "parameter declaration not found in compilation; left unchanged",
@@ -176,9 +272,13 @@ DataTypeSyntax *ParameterRewriter::mangleEnumTypes(DataTypeSyntax &typeSyn) {
 }
 
 void ParameterRewriter::handle(const TypeParameterDeclarationSyntax &pd) {
-  auto uniqMod = getUniqueModule(pd);
-  if (!uniqMod)
+  const Scope *scope = nullptr; // getContainingScope(pd);
+  if (scope == nullptr) {
+    diag.log(DiagSev::Note,
+             "parameter declaration not found in any scope; left unchanged", pd,
+             true);
     return;
+  }
   std::vector<std::string> newDeclStrs;
   auto typePrinter = TypePrinter();
   typePrinter.options.skipScopedTypeNames = true;
@@ -186,7 +286,7 @@ void ParameterRewriter::handle(const TypeParameterDeclarationSyntax &pd) {
   for (auto decl : pd.declarators) {
     // Find parameter in compilation; if not found, leave as-is
     auto memberSym =
-        getParamSymOrBail<TypeAssignmentSyntax>(decl, newDeclStrs, uniqMod);
+        getParamSymOrBail<TypeAssignmentSyntax>(decl, newDeclStrs, *scope);
     if (!memberSym)
       continue;
     auto &paramSym = memberSym->as<TypeParameterSymbol>();
@@ -210,14 +310,18 @@ void ParameterRewriter::handle(const TypeParameterDeclarationSyntax &pd) {
 }
 
 void ParameterRewriter::handle(const ParameterDeclarationSyntax &pd) {
-  auto uniqMod = getUniqueModule(pd);
-  if (!uniqMod)
+  auto scope = getContainingScope(pd);
+  if (scope == nullptr) {
+    diag.log(DiagSev::Note,
+             "parameter declaration not found in any scope; left unchanged", pd,
+             true);
     return;
+  }
   std::vector<std::string> newDeclStrs;
   for (auto decl : pd.declarators) {
     // Find parameter in compilation; if not found, leave as-is
     auto memberSym =
-        getParamSymOrBail<DeclaratorSyntax>(decl, newDeclStrs, uniqMod);
+        getParamSymOrBail<DeclaratorSyntax>(decl, newDeclStrs, *scope);
     if (!memberSym)
       continue;
     auto &paramSym = memberSym->as<ParameterSymbol>();
