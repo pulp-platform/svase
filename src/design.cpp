@@ -33,6 +33,10 @@ std::string_view DesignUniqueModule::getGenericName() const {
 }
 
 std::string DesignUniqueModule::getUniqueName() const {
+  if (getGenericName().find(fmt::format("__{}", id)) != std::string::npos) {
+    // Already uniquified
+    return fmt::format("{}", getGenericName());
+  }
   return fmt::format("{}__{}", getGenericName(), id);
 }
 

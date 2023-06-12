@@ -19,6 +19,7 @@
 
 #include "slang/ast/symbols/CompilationUnitSymbols.h"
 #include "slang/driver/Driver.h"
+#include "slang/syntax/SyntaxTree.h"
 #include "slang/util/TimeTrace.h"
 
 namespace svase {
@@ -183,10 +184,33 @@ int driverMain(int argc, char **argv) {
   // Run our passes (TODO: somehow handle boolean return?)
   synTree =
       UniqueModuleRewriter(*design, alloc, strAlloc, diag).transform(synTree);
-  synTree =
-      ParameterRewriter(*design, alloc, strAlloc, diag).transform(synTree);
   synTree = GenerateRewriter(*design, alloc, strAlloc, diag).transform(synTree);
-  synTree = TypedefDeclarationRewriter(*design, alloc, strAlloc, diag)
+
+  compilation = std::make_unique<Compilation>(compilation->getOptions());
+  std::vector<std::pair<std::string, std::string>> intermediateBuffers;
+  intermediateBuffers.emplace_back(cmdOptsRes["top"].as<std::string>(),
+                                   synTree->root().toString());
+
+  Diag newDiag;
+  newDiag.setVerbosity(verbosity);
+  SourceManager newSourceManager;
+  synTree = slang::syntax::SyntaxTree::fromFileInMemory(
+      std::string_view(intermediateBuffers.back().second), newSourceManager,
+      "after_gen_unfold");
+  compilation->addSyntaxTree(synTree);
+  ok = slangDriver.reportCompilation(*compilation, false);
+  if (!ok)
+    return 5;
+
+  design =
+      std::make_unique<Design>(*compilation->getRoot().topInstances.begin());
+  synTree = compilation->getSyntaxTrees().back();
+  newDiag.registerEngine(&newSourceManager);
+  synTree = UniqueModuleRewriter(*design, alloc, strAlloc, newDiag)
+                .transform(synTree);
+  synTree =
+      ParameterRewriter(*design, alloc, strAlloc, newDiag).transform(synTree);
+  synTree = TypedefDeclarationRewriter(*design, alloc, strAlloc, newDiag)
                 .transform(synTree);
   // } catch (const std::exception e) {diag.log(DiagSev::Fatal, e.what()); ok =
   // false;}
