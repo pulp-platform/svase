@@ -88,12 +88,6 @@ const Scope *ParameterRewriter::getContainingScope(
   // Obtain Scope containing the Symbols of the given SyntaxNode
   static std::unordered_map<const SyntaxNode *, const Scope *> cache;
 
-  diag.log(DiagSev::Warning,
-           fmt::format("input is "
-                       "`{}`",
-                       toString(pd.kind)),
-           pd, true);
-
   if (pd.parent == nullptr) {
     return nullptr;
   }
@@ -128,11 +122,6 @@ const Scope *ParameterRewriter::getContainingScope(
     if (cache.count(node) > 0) {
       scope = cache[node];
     } else {
-      diag.log(DiagSev::Warning,
-               fmt::format("modNode->parent is"
-                           "`{}`;",
-                           toString(node->parent->kind)),
-               pd, true);
       node = node->parent;
 
       if (node->kind == SyntaxKind::ModuleDeclaration) {
@@ -159,21 +148,6 @@ const Scope *ParameterRewriter::getContainingScope(
     // localScope->lookupName(pd.as<DeclaratorSyntax>().name.rawText());
 
     for (auto &child : localScope->members()) {
-      auto syntax = child.getSyntax();
-      if (syntax) {
-        diag.log(DiagSev::Warning,
-                 fmt::format("localScope->member is "
-                             "`{}` {};",
-                             toString(syntax->kind), child.isScope()),
-                 *syntax, true);
-      } else {
-        diag.log(DiagSev::Warning,
-                 fmt::format("localScope->member is scope? "
-                             "{};",
-                             child.isScope()),
-                 pd, true);
-      }
-
       // if the syntax of the child-symbol is our syntax
       // then we currently are in its containing scope
       auto childLocation = child.location;
