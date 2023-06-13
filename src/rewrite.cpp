@@ -82,17 +82,12 @@ DesignUniqueModule *ParameterRewriter::getUniqueModule(
   return design.getUniqueModule(modSyn.header->name.rawText());
 }
 
-const Scope *ParameterRewriter::getContainingScope(
-    const ParameterDeclarationBaseSyntax &pd) const {
-
-  // Obtain Scope containing the Symbols of the given SyntaxNode
+const Scope *
+ParameterRewriter::getContainingScope(const SyntaxNode &synNode) const {
+  // Obtain Scope containing the Symbols corresponding to the given SyntaxNode
   static std::unordered_map<const SyntaxNode *, const Scope *> cache;
 
-  if (pd.parent == nullptr) {
-    return nullptr;
-  }
-
-  const SyntaxNode *node = &pd;
+  const SyntaxNode *node = &synNode;
   const Scope *scope = nullptr;
 
   const SyntaxNode *topNode = nullptr;
@@ -100,6 +95,7 @@ const Scope *ParameterRewriter::getContainingScope(
   while (topNode == nullptr && node->parent != nullptr &&
          node->parent->kind != SyntaxKind::Unknown &&
          node->parent->kind != SyntaxKind::CompilationUnit) {
+    // these Nodes create the current scope, we can't go further
     if (node->parent->kind == SyntaxKind::GenerateBlock ||
         node->parent->kind == SyntaxKind::LoopGenerate ||
         node->parent->kind == SyntaxKind::ModuleDeclaration) {
@@ -113,11 +109,12 @@ const Scope *ParameterRewriter::getContainingScope(
     return nullptr;
   }
 
+  // Use source-code location as SyntaxNode identifier to match Symbol
   SourceLocation topNodeSourceStart = topNode->sourceRange().start();
   SourceLocation topNodeSourceEnd = topNode->sourceRange().end();
 
-  // go upwards through the SyntaxNodes
-  // while checking the cache for any known SyntaxNodes
+  // go upwards through the SyntaxNodes (through parent Scopes)
+  // find the next known scope (from cache or UniqueModule)
   while (scope == nullptr && node->parent) {
     if (cache.count(node) > 0) {
       scope = cache[node];
@@ -136,16 +133,15 @@ const Scope *ParameterRewriter::getContainingScope(
   if (!scope) {
     return nullptr;
   }
-
   // here we have a scope in which the corresponding symbol should be somewhere
+
+  // scopes encountered while going downwards, need to be searched for Symbol
   std::queue<const Scope *> remainingScopes;
   remainingScopes.push(scope);
 
   while (!remainingScopes.empty()) {
     auto localScope = remainingScopes.front();
     remainingScopes.pop();
-    // auto test3 =
-    // localScope->lookupName(pd.as<DeclaratorSyntax>().name.rawText());
 
     for (auto &child : localScope->members()) {
       // if the syntax of the child-symbol is our syntax
@@ -260,13 +256,9 @@ DataTypeSyntax *ParameterRewriter::mangleEnumTypes(DataTypeSyntax &typeSyn) {
 }
 
 void ParameterRewriter::handle(const TypeParameterDeclarationSyntax &pd) {
-  const Scope *scope = nullptr; // getContainingScope(pd);
-  if (scope == nullptr) {
-    diag.log(DiagSev::Note,
-             "parameter declaration not found in any scope; left unchanged", pd,
-             true);
+  auto uniqMod = getUniqueModule(pd);
+  if (!uniqMod)
     return;
-  }
   std::vector<std::string> newDeclStrs;
   auto typePrinter = TypePrinter();
   typePrinter.options.skipScopedTypeNames = true;
@@ -310,7 +302,6 @@ void ParameterRewriter::handle(const ParameterDeclarationSyntax &pd) {
   }
   if (!scope)
     return;
-  }
   std::vector<std::string> newDeclStrs;
   for (auto decl : pd.declarators) {
     // Find parameter in compilation; if not found, leave as-is
