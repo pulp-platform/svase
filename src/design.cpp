@@ -37,6 +37,18 @@ std::string DesignUniqueModule::getUniqueName() const {
     // Already uniquified
     return fmt::format("{}", getGenericName());
   }
+  std::smatch sm;
+  fmt::print("Warning: Module {}\n", getGenericName());
+  std::string name = fmt::format("{}", getGenericName());
+  std::regex_search(name, sm, std::regex("__\\d{15,}"));
+  if (sm.size() > 0) {
+    fmt::print(
+        "Warning: Module name {} contains a 15+ digit number, which is likely "
+        "a hash. This may cause collisions in the uniquification process.\n",
+        getGenericName());
+    // Already uniquified
+    return fmt::format("{}", getGenericName());
+  }
   return fmt::format("{}__{}", getGenericName(), id);
 }
 

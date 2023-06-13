@@ -61,7 +61,8 @@ private:
   /// null.
   DesignUniqueModule *
   getUniqueModule(const ParameterDeclarationBaseSyntax &pd) const;
-  const Scope *getContainingScope(const ParameterDeclarationSyntax &pd) const;
+  const Scope *
+  getContainingScope(const ParameterDeclarationBaseSyntax &pd) const;
 
   /// Get the symbol for a parameter declaration syntax or leave it unchanged
   /// and return null.

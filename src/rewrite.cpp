@@ -80,22 +80,30 @@ DesignUniqueModule *ParameterRewriter::getUniqueModule(
 }
 
 const Scope *ParameterRewriter::getContainingScope(
-    const ParameterDeclarationSyntax &pd) const {
+    const ParameterDeclarationBaseSyntax &pd) const {
   // Obtain Scope containing the Symbols of the given SyntaxNode
   static std::unordered_map<const SyntaxNode *, const Scope *> cache;
 
-  diag.log(DiagSev::Warning,
-           fmt::format("input is "
-                       "`{}`",
-                       toString(pd.kind)),
-           pd, true);
+  // diag.log(DiagSev::Warning,
+  //          fmt::format("input is "
+  //                      "`{}`",
+  //                      toString(pd.kind)),
+  //          pd, true);
+
+  if (pd.parent == nullptr) {
+    // diag.log(DiagSev::Warning,
+    //          fmt::format("pd->parent is nullptr; left unchanged"),
+    //          pd, true);
+    return nullptr;
+  }
 
   const SyntaxNode *node = &pd;
   const Scope *scope = nullptr;
 
   const SyntaxNode *topNode = nullptr;
   // go to the top-most Node still in the same scope
-  while (topNode == nullptr && node->parent) {
+  while (topNode == nullptr && node->parent != nullptr &&
+         node->parent->kind != SyntaxKind::Unknown) {
     if (node->parent->kind == SyntaxKind::GenerateBlock ||
         node->parent->kind == SyntaxKind::LoopGenerate ||
         node->parent->kind == SyntaxKind::ModuleDeclaration) {
@@ -103,6 +111,12 @@ const Scope *ParameterRewriter::getContainingScope(
     } else {
       node = node->parent;
     }
+  }
+  if (topNode == nullptr) {
+    // diag.log(DiagSev::Warning,
+    //          fmt::format("topNode is nullptr; left unchanged"),
+    //          pd, true);
+    return nullptr;
   }
 
   SourceLocation topNodeSourceStart = topNode->sourceRange().start();
@@ -114,11 +128,11 @@ const Scope *ParameterRewriter::getContainingScope(
     if (cache.count(node) > 0) {
       scope = cache[node];
     } else {
-      diag.log(DiagSev::Warning,
-               fmt::format("modNode->parent is"
-                           "`{}`;",
-                           toString(node->parent->kind)),
-               pd, true);
+      // diag.log(DiagSev::Warning,
+      //          fmt::format("modNode->parent is"
+      //                      "`{}`;",
+      //                      toString(node->parent->kind)),
+      //          pd, true);
       node = node->parent;
 
       if (node->kind == SyntaxKind::ModuleDeclaration) {
@@ -145,20 +159,20 @@ const Scope *ParameterRewriter::getContainingScope(
     // localScope->lookupName(pd.as<DeclaratorSyntax>().name.rawText());
 
     for (auto &child : localScope->members()) {
-      auto syntax = child.getSyntax();
-      if (syntax) {
-        diag.log(DiagSev::Warning,
-                 fmt::format("localScope->member is "
-                             "`{}` {};",
-                             toString(syntax->kind), child.isScope()),
-                 *syntax, true);
-      } else {
-        diag.log(DiagSev::Warning,
-                 fmt::format("localScope->member is scope? "
-                             "{};",
-                             child.isScope()),
-                 pd, true);
-      }
+      // auto syntax = child.getSyntax();
+      // if (syntax) {
+      //   diag.log(DiagSev::Warning,
+      //            fmt::format("localScope->member is "
+      //                        "`{}` {};",
+      //                        toString(syntax->kind), child.isScope()),
+      //            *syntax, true);
+      // } else {
+      //   diag.log(DiagSev::Warning,
+      //            fmt::format("localScope->member is scope? "
+      //                        "{};",
+      //                        child.isScope()),
+      //            pd, true);
+      // }
 
       // if the syntax of the child-symbol is our syntax
       // then we currently are in its containing scope
