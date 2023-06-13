@@ -181,14 +181,22 @@ int driverMain(int argc, char **argv) {
       std::make_unique<Design>(*compilation->getRoot().topInstances.begin());
   synTree = compilation->getSyntaxTrees().back();
   // Run our passes (TODO: somehow handle boolean return?)
+
+  // turn each parametrization into a unique module
   synTree =
       UniqueModuleRewriter(*design, alloc, strAlloc, diag).transform(synTree);
+  // propagate port-params from instances to new modules (as defaults)
   synTree =
       ParameterRewriter(*design, alloc, strAlloc, diag).transform(synTree);
+  // unroll all generate blocks and loops
   synTree = GenerateRewriter(*design, alloc, strAlloc, diag).transform(synTree);
+  // propagate components of typedefs (ie other types from pkgs in a struct)
+  // to the modules
   synTree = TypedefDeclarationRewriter(*design, alloc, strAlloc, diag)
                 .transform(synTree);
 
+  // recompile to make unrolled structure explicit/real
+  // (each genblock has a unique location in the source-code)
   diag.logStage("REWRITE [after recompilation]");
   compilation = std::make_unique<Compilation>(compilation->getOptions());
   std::vector<std::pair<std::string, std::string>> intermediateBuffers;
@@ -206,8 +214,12 @@ int driverMain(int argc, char **argv) {
       *compilation->getRoot().topInstances.begin(), true);
   synTree = compilation->getSyntaxTrees().back();
   newDiag.registerEngine(&newSourceManager);
+
+  // Run passes after unrolling the structure
+  // Todo: Is this necessary?
   synTree = UniqueModuleRewriter(*design, alloc, strAlloc, newDiag)
                 .transform(synTree);
+  // Propagate parameters inside each module (and the unrolled generate blocks)
   synTree =
       ParameterRewriter(*design, alloc, strAlloc, newDiag).transform(synTree);
   // } catch (const std::exception e) {diag.log(DiagSev::Fatal, e.what()); ok =
