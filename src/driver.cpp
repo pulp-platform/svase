@@ -188,6 +188,34 @@ int driverMain(int argc, char **argv) {
   synTree = GenerateRewriter(*design, alloc, strAlloc, diag).transform(synTree);
   synTree = TypedefDeclarationRewriter(*design, alloc, strAlloc, diag)
                 .transform(synTree);
+
+  diag.logStage("REWRITE [PART 2]");
+  compilation = std::make_unique<Compilation>(compilation->getOptions());
+  std::vector<std::pair<std::string, std::string>> intermediateBuffers;
+  intermediateBuffers.emplace_back(cmdOptsRes["top"].as<std::string>(),
+                                   synTree->root().toString());
+  Diag newDiag;
+  newDiag.setVerbosity(verbosity);
+  SourceManager newSourceManager;
+  synTree = slang::syntax::SyntaxTree::fromFileInMemory(
+      std::string_view(intermediateBuffers.back().second), newSourceManager,
+      "after_gen_unfold");
+  compilation->addSyntaxTree(synTree);
+  ok = slangDriver.reportCompilation(*compilation, true);
+  // expected to fail when using standard cell, or macros as there are unknown
+  // modules
+  ok = true;
+
+  design = std::make_unique<Design>(
+      *compilation->getRoot().topInstances.begin(), true);
+  synTree = compilation->getSyntaxTrees().back();
+  newDiag.registerEngine(&newSourceManager);
+  synTree = UniqueModuleRewriter(*design, alloc, strAlloc, newDiag)
+                .transform(synTree);
+  synTree =
+      ParameterRewriter(*design, alloc, strAlloc, newDiag).transform(synTree);
+  // synTree = TypedefDeclarationRewriter(*design, alloc, strAlloc, newDiag)
+  //               .transform(synTree);
   // } catch (const std::exception e) {diag.log(DiagSev::Fatal, e.what()); ok =
   // false;}
   // if (!ok) return 6;

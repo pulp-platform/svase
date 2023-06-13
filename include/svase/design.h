@@ -57,7 +57,7 @@ public:
 
   /// Get the uniquified name for this module, i.e. suffixed with its unique
   /// parameter ID.
-  std::string getUniqueName() const;
+  std::string getUniqueName(bool isRecompiled) const;
 };
 
 /// Describes and stores a compiled design hierarchy, grouping instances by
@@ -72,6 +72,8 @@ private:
   std::unordered_map<std::string_view, std::unordered_map<std::string, size_t>>
       uniqModByParamStr;
 
+  bool _isRecompiled;
+
   /// Insert an instance into the collection, returning the hierarchical key to
   /// the reference. Instances of the unique module are ordered by insertion, so
   /// the created instance is the last entry.
@@ -83,10 +85,13 @@ private:
   void walkModuleInstances(const Symbol *sym);
 
 public:
-  Design(const InstanceSymbol *root)
-      : uniqMods(), uniqModByName(), uniqModByParamStr() {
+  Design(const InstanceSymbol *root, bool isRecompiled = false)
+      : uniqMods(), uniqModByName(), uniqModByParamStr(),
+        _isRecompiled(isRecompiled) {
     walkModuleInstances(root);
   }
+
+  bool isRecompiled() { return _isRecompiled; };
 
   /// Get a pointer to a generic module if it exists or null.
   const std::unordered_map<size_t, DesignUniqueModule> *
