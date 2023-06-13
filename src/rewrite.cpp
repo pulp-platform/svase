@@ -62,14 +62,15 @@ DesignUniqueModule *ParameterRewriter::getUniqueModule(
   // Obtain module instance from either port list or root (skip if in package or
   // in some other config)
   auto modNode = pd.parent;
-
-  return nullptr;
-
-  while (modNode->kind != SyntaxKind::ModuleDeclaration && modNode->parent) {
+  if (modNode->kind == SyntaxKind::ParameterPortList)
+    modNode = modNode->parent->parent;
+  else if (modNode->kind == SyntaxKind::ParameterDeclarationStatement)
     modNode = modNode->parent;
-  }
-
-  if (modNode->kind != SyntaxKind::ModuleDeclaration) {
+  if (modNode->kind == SyntaxKind::PackageDeclaration ||
+      modNode->kind == SyntaxKind::InterfaceDeclaration ||
+      modNode->kind == SyntaxKind::GenerateBlock)
+    return nullptr;
+  else if (modNode->kind != SyntaxKind::ModuleDeclaration) {
     diag.log(DiagSev::Warning,
              fmt::format("parameter declaration with unhandled parent kind "
                          "`{}`; left unchanged",
