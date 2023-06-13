@@ -7,6 +7,8 @@
 
 #include <queue>
 
+#include <queue>
+
 #include "svase/rewrite.h"
 #include "svase/util.h"
 
@@ -32,7 +34,8 @@ void UniqueModuleRewriter::handle(const ModuleDeclarationSyntax &modSyn) {
     for (auto uniqPair : *genMod) {
       auto uniqMod = uniqPair.second;
       // Change module name to unique version
-      auto name = strAlloc.emplace(uniqMod.getUniqueName());
+      auto name =
+          strAlloc.emplace(uniqMod.getUniqueName(design.isRecompiled()));
       auto nameToken = hdrSyn->name.withRawText(alloc, *name);
       // Assemble header
       auto uniqHdrSyn =
@@ -80,7 +83,8 @@ DesignUniqueModule *ParameterRewriter::getUniqueModule(
 }
 
 const Scope *ParameterRewriter::getContainingScope(
-    const ParameterDeclarationSyntax &pd) const {
+    const ParameterDeclarationBaseSyntax &pd) const {
+
   // Obtain Scope containing the Symbols of the given SyntaxNode
   static std::unordered_map<const SyntaxNode *, const Scope *> cache;
 
@@ -90,12 +94,18 @@ const Scope *ParameterRewriter::getContainingScope(
                        toString(pd.kind)),
            pd, true);
 
+  if (pd.parent == nullptr) {
+    return nullptr;
+  }
+
   const SyntaxNode *node = &pd;
   const Scope *scope = nullptr;
 
   const SyntaxNode *topNode = nullptr;
   // go to the top-most Node still in the same scope
-  while (topNode == nullptr && node->parent) {
+  while (topNode == nullptr && node->parent != nullptr &&
+         node->parent->kind != SyntaxKind::Unknown &&
+         node->parent->kind != SyntaxKind::CompilationUnit) {
     if (node->parent->kind == SyntaxKind::GenerateBlock ||
         node->parent->kind == SyntaxKind::LoopGenerate ||
         node->parent->kind == SyntaxKind::ModuleDeclaration) {
@@ -103,6 +113,10 @@ const Scope *ParameterRewriter::getContainingScope(
     } else {
       node = node->parent;
     }
+  }
+
+  if (topNode == nullptr) {
+    return nullptr;
   }
 
   SourceLocation topNodeSourceStart = topNode->sourceRange().start();
@@ -180,8 +194,8 @@ const Scope *ParameterRewriter::getContainingScope(
 
 template <typename T>
 const Symbol *ParameterRewriter::getParamSymOrBail(
-    const T *pd, std::vector<std::string> &declStrs, const Scope &scope) const {
-  auto memberSym = getScopeMember(scope, pd->name.rawText());
+    const T *pd, std::vector<std::string> &declStrs, const Scope *scope) const {
+  auto memberSym = getScopeMember(*scope, pd->name.rawText());
   if (memberSym == nullptr) {
     diag.log(DiagSev::Note,
              "parameter declaration not found in compilation; left unchanged",
@@ -285,8 +299,9 @@ void ParameterRewriter::handle(const TypeParameterDeclarationSyntax &pd) {
   typePrinter.options.fullEnumType = true;
   for (auto decl : pd.declarators) {
     // Find parameter in compilation; if not found, leave as-is
-    auto memberSym =
-        getParamSymOrBail<TypeAssignmentSyntax>(decl, newDeclStrs, *scope);
+    auto memberSym = getParamSymOrBail<TypeAssignmentSyntax>(
+        decl, newDeclStrs,
+        &uniqMod->getInstances().begin()->symbol->body.as<Scope>());
     if (!memberSym)
       continue;
     auto &paramSym = memberSym->as<TypeParameterSymbol>();
@@ -310,18 +325,23 @@ void ParameterRewriter::handle(const TypeParameterDeclarationSyntax &pd) {
 }
 
 void ParameterRewriter::handle(const ParameterDeclarationSyntax &pd) {
-  auto scope = getContainingScope(pd);
-  if (scope == nullptr) {
-    diag.log(DiagSev::Note,
-             "parameter declaration not found in any scope; left unchanged", pd,
-             true);
+  const Scope *scope = nullptr;
+  if (design.isRecompiled()) {
+    scope = getContainingScope(pd);
+  } else {
+    auto uniqMod = getUniqueModule(pd);
+    if (!uniqMod)
+      return;
+    scope = &uniqMod->getInstances().begin()->symbol->body.as<Scope>();
+  }
+  if (!scope)
     return;
   }
   std::vector<std::string> newDeclStrs;
   for (auto decl : pd.declarators) {
     // Find parameter in compilation; if not found, leave as-is
     auto memberSym =
-        getParamSymOrBail<DeclaratorSyntax>(decl, newDeclStrs, *scope);
+        getParamSymOrBail<DeclaratorSyntax>(decl, newDeclStrs, scope);
     if (!memberSym)
       continue;
     auto &paramSym = memberSym->as<ParameterSymbol>();
@@ -643,7 +663,8 @@ GenerateRewriter::unrollGenSyntax(const HierarchyInstantiationSyntax &instSyn,
     diag.log(DiagSev::Fatal, "Could not find unique module for instance",
              instSyn);
   // Create a new type token
-  auto uniqNameStr = strAlloc.emplace(uniqMod->getUniqueName() + " ");
+  auto uniqNameStr =
+      strAlloc.emplace(uniqMod->getUniqueName(design.isRecompiled()) + " ");
   auto uniqTypeTok =
       instSyn.type.withRawText(alloc, std::string_view(*uniqNameStr));
   // Return reconstructed instantiation

@@ -32,7 +32,31 @@ std::string_view DesignUniqueModule::getGenericName() const {
   return instances.back().symbol->getDefinition().name;
 }
 
-std::string DesignUniqueModule::getUniqueName() const {
+std::string DesignUniqueModule::getUniqueName(bool isRecompiled = false) const {
+  if (isRecompiled) {
+    if (getGenericName().find(fmt::format("__{}", id)) != std::string::npos) {
+      // Already uniquified
+      return fmt::format("{}", getGenericName());
+    }
+    std::smatch sm;
+    std::string name = fmt::format("{}", getGenericName());
+    std::regex_search(name, sm, std::regex("__\\d{15,}"));
+    if (sm.size() > 0) {
+      // Already uniquified
+      return fmt::format("{}", getGenericName());
+    }
+  } else {
+    std::smatch sm;
+    std::string name = fmt::format("{}", getGenericName());
+    std::regex_search(name, sm, std::regex("__\\d{15,}"));
+    if (sm.size() > 0) {
+      fmt::print(
+          "Warning: Module name {} contains a 15+ digit number, which is "
+          "likely "
+          "a hash. This may cause collisions in the uniquification process.\n",
+          getGenericName());
+    }
+  }
   return fmt::format("{}__{}", getGenericName(), id);
 }
 
@@ -56,9 +80,10 @@ void Design::insertInstance(const InstanceSymbol *const sym,
       containedMod->addInstance(sym);
   } else {
     // Module Insertion successful: enter unique module into its maps
-    uniqModByName.emplace(std::piecewise_construct,
-                          std::make_tuple(containedMod->getUniqueName()),
-                          std::make_tuple(genericName, id));
+    uniqModByName.emplace(
+        std::piecewise_construct,
+        std::make_tuple(containedMod->getUniqueName(isRecompiled())),
+        std::make_tuple(genericName, id));
     uniqModByParamStr[genericName].emplace(std::piecewise_construct,
                                            std::make_tuple(genParamString(sym)),
                                            std::make_tuple(id));
