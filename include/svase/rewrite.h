@@ -61,12 +61,12 @@ private:
   /// null.
   DesignUniqueModule *
   getUniqueModule(const ParameterDeclarationBaseSyntax &pd) const;
-  const Scope *getContainingScope(const ParameterDeclarationSyntax &pd) const;
 
-  const Scope *
-  getContainingScope(const ParameterDeclarationBaseSyntax &pd) const;
+  // Obtain Scope containing the Symbols corresponding to the given SyntaxNode
+  const Scope *getContainingScope(const SyntaxNode &synNode) const;
   /// Get the symbol for a parameter declaration syntax or leave it unchanged
   /// and return null.
+
   template <typename T>
   const Symbol *getParamSymOrBail(const T *pd,
                                   std::vector<std::string> &declStrs,
