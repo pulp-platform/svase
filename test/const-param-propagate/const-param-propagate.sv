@@ -1,3 +1,9 @@
+// Test the following parameter propagation scenarios:
+// - to port of instantiated module
+// - to params in scope of module itself
+// - into generate-if scope
+// - into iterations of generate-loop
+
 module test2 #(
 	parameter int unsigned PortParam = 0
 ) ( );
