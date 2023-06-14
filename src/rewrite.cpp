@@ -13,6 +13,7 @@
 #include "svase/util.h"
 
 #include "fmt/format.h"
+#include "slang/ast/symbols/MemberSymbols.h"
 #include "slang/ast/symbols/ParameterSymbols.h"
 #include "slang/ast/symbols/VariableSymbols.h"
 #include "slang/ast/types/TypePrinter.h"
@@ -772,4 +773,89 @@ void TypedefDeclarationRewriter::handle(const TypedefDeclarationSyntax &pd) {
   typePrinter.clear();
   replaceTypeDeclOrBail<TypedefDeclarationSyntax>(declStr, pd);
 }
+
+DesignUniqueModule *
+AssignmentRewriter::getUniqueModule(const SyntaxNode &pd) const {
+  // Obtain module instance from either port list or root (skip if in package or
+  // in some other config)
+  auto *modNode = &pd;
+  while (modNode->kind != SyntaxKind::ModuleDeclaration &&
+         modNode->kind != SyntaxKind::Unknown &&
+         modNode->kind != SyntaxKind::CompilationUnit &&
+         modNode->kind != SyntaxKind::PackageDeclaration &&
+         modNode->parent != nullptr) {
+    modNode = modNode->parent;
+  }
+  if (modNode->kind != SyntaxKind::ModuleDeclaration) {
+    diag.log(DiagSev::Warning,
+             fmt::format(
+                 "type rewrite with no parent found with unhandled parent kind "
+                 "`{}`; left unchanged",
+                 toString(modNode->kind)),
+             pd, true);
+    return nullptr;
+  }
+  // Obtain corresponding unique module
+  auto &modSyn = modNode->as<ModuleDeclarationSyntax>();
+  return design.getUniqueModule(modSyn.header->name.rawText());
+}
+
+const Symbol *
+AssignmentRewriter::getLHSNameSymOrBail(const ContinuousAssignSyntax *pd,
+                                        DesignUniqueModule *uniqMod) const {
+  if (pd->assignments.size() != 1) {
+    diag.log(DiagSev::Warning,
+             fmt::format(
+                 "type rewrite with no parent found with unhandled parent kind "
+                 "`{}`; left unchanged",
+                 toString(pd->kind)),
+             *pd, true);
+    return nullptr;
+  }
+
+  // debugging
+  for (auto assign : pd->assignments) {
+    fmt::print("\n\nassign {} {} {}\n", assign->toString(), toString(assign->kind), assign->getChildCount());
+    for( size_t i=0; i<assign->getChildCount(); i++ ){
+      auto child = assign->childNode(i);
+      if(child) {
+        fmt::print("    i:{}->{}   k: {}\n", i, child->toString(), toString(child->kind));
+      }
+    }
+  }
+
+  auto &scope =
+        uniqMod->getInstances().begin()->symbol->body.template as<Scope>();
+  const ContinuousAssignSymbol &memberSym = *(synToSym<ContinuousAssignSymbol>(*pd, scope));
+  auto &assign = memberSym.getAssignment();
+  fmt::print("location: {} - {}\n", assign.sourceRange.start().offset(), assign.sourceRange.end().offset());
+  auto val = assign.eval(this->context);
+  auto& diags = this->context.getDiagnostics();
+  for(auto diag : diags) {
+    fmt::print("error? {}\n", diag.isError());
+  }
+  if(val) {
+    fmt::print("{}\n", val.toString());
+  } else {
+    fmt::print("val is null\n");
+  }
+
+  return nullptr;
+}
+
+void AssignmentRewriter::handle(const ContinuousAssignSyntax &pd) {
+  auto uniqMod = getUniqueModule(pd);
+  if (!uniqMod)
+    return;
+  fmt::print("ContinuousAssignSyntax {} \n", pd.toString());
+  auto memberSym = getLHSNameSymOrBail(&pd, uniqMod);
+  if (!memberSym)
+    return;
+  /*auto newEquals =
+        EqualsValueClauseSyntax(decl->initializer->equals, exprSyn);
+    auto declSyn = DeclaratorSyntax(decl->name, decl->dimensions, &newEquals);
+    newDeclStrs.emplace_back(declSyn.toString());*/
+  fmt::print("memberSym {} \n", memberSym->name);
+}
+
 } // namespace svase

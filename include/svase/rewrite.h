@@ -208,4 +208,25 @@ public:
   void handle(const TypedefDeclarationSyntax &pd);
 };
 
+class AssignmentRewriter : public DesignRewriter<AssignmentRewriter> {
+private:
+  EvalContext &context;
+
+  const Symbol *getLHSNameSymOrBail(const ContinuousAssignSyntax *pd,
+                                    DesignUniqueModule *uniqMod) const;
+  // template <typename T>
+  // void replaceAssignmentOrBail(std::string declStr, const T &pd);
+
+  DesignUniqueModule *getUniqueModule(const SyntaxNode &pd) const;
+
+public:
+  using DesignRewriter::DesignRewriter;
+
+  template<typename... Args>
+  AssignmentRewriter(EvalContext &context, Args&&... args) : 
+    DesignRewriter(std::forward<Args>(args)...), context(context) { }
+
+  void handle(const ContinuousAssignSyntax &pd);
+};
+
 } // namespace svase
