@@ -48,9 +48,14 @@ This project is still considered to be in early development; some parts may not 
 * [ ] Investigate Occamy Top as test
 
 ## Install & Build
-
 Tested with GCC 11.2.0 and cmake 3.20.2
 
+One-liner:
+```bash
+make all
+```
+
+Step-by-step:
 ```bash
 # install dependencies
 source scripts/svase.env
@@ -65,6 +70,7 @@ make
 ## Usage
 
 ```bash
+# svase top_module output_file.sv input_file.sv
 svase snitch test2.v test/build/snitch_cluster_wrapper.pickle.sv
 ```
 
