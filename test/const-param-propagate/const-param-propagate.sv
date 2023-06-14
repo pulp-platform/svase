@@ -1,3 +1,9 @@
+// Copyright (c) 2022 ETH Zurich and University of Bologna.
+// Licensed under the Apache License, Version 2.0, see LICENSE for details.
+// SPDX-License-Identifier: Apache-2.0
+//
+// Author:  Philippe Sauter <phsauter@student.ethz.ch>
+//
 // Test the following parameter propagation scenarios:
 // - to port of instantiated module
 // - to params in scope of module itself
