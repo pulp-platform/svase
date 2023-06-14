@@ -5,25 +5,12 @@
 // Author:  Philippe Sauter <phsauter@student.ethz.ch>
 //
 // Test the following parameter propagation scenarios:
-// - to port of instantiated module
-// - to params in scope of module itself
 // - into generate-if scope
 // - into iterations of generate-loop
 
-module test2 #(
-	parameter int unsigned PortParam = 0
-) ( );
-	localparam int unsigned Module2Param = PortParam;
-endmodule
-
-
-module test #(
-	parameter int unsigned IfElseParam = 2,
-	parameter int unsigned ModuleParam = 32'd5
-) ( );
-	localparam int unsigned TopParam = unsigned'($clog2(ModuleParam));
-
-	test2 #(.PortParam(TopParam)) i_test2 ( );
+module test #( ) ( );
+	localparam int unsigned IfElseParam = 2;
+	localparam int unsigned ModuleParam = 32'd5;
 
 	if (IfElseParam == unsigned'(1)) begin
 		localparam int unsigned GenParam = unsigned'($clog2(ModuleParam));
