@@ -2,3 +2,4 @@
 **/*build*
 deps/install
 splitted_output/
+test/debug

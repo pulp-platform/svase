@@ -1,25 +1,44 @@
 {
+  "version": "0.2.0",
   "configurations": [
     {
-      "name": "const-param-propagate",
+      "name": "ParameterRewriter - port to module",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceRoot}/build/svase",
-      "cwd": "${workspaceRoot}",
-      "args": ["test", "test/const-param-propagate/const-param-propagate_out.sv", "test/const-param-propagate/const-param-propagate.sv"],
-      "MIMode": "gdb",
-      "setupCommands": [
-        {
-          "description": "Enable pretty-printing for gdb",
-          "text": "-enable-pretty-printing",
-          "ignoreFailures": true
-        },
-        {
-          "description": "Set Disassembly Flavor to Intel",
-          "text": "-gdb-set disassembly-flavor intel",
-          "ignoreFailures": true
-        }
-      ]
+      "program": "${workspaceFolder}/build/svase",
+      "cwd": "${workspaceFolder}/test/param",
+      "args": ["test", "../debug/port-to-module_out.sv", "port-to-module.sv"],
+      "preLaunchTask": "createDebugDirectory"
+    },
+    {
+      "name": "ParameterRewriter - param instance",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/svase",
+      "cwd": "${workspaceFolder}/test/param",
+      "args": ["test", "../debug/param-instance_out.sv", "param-instance.sv"],
+      "preLaunchTask": "createDebugDirectory"
+    },
+    {
+      "name": "ParameterRewriter - generate-blocks",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/svase",
+      "cwd": "${workspaceFolder}/test/param",
+      "args": ["test", "../debug/param-in-gen_out.sv", "param-in-gen.sv"],
+      "preLaunchTask": "createDebugDirectory"
+    }
+  ],
+  "cppdbg.setupCommands": [
+    {
+      "description": "Enable pretty-printing for gdb",
+      "text": "-enable-pretty-printing",
+      "ignoreFailures": true
+    },
+    {
+      "description": "Set Disassembly Flavor to Intel",
+      "text": "-gdb-set disassembly-flavor intel",
+      "ignoreFailures": true
     }
   ]
 }

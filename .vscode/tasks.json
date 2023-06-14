@@ -1,0 +1,11 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+		  "label": "createDebugDirectory",
+		  "type": "shell",
+		  "command": "mkdir",
+		  "args": ["-p", "${workspaceFolder}/test/debug"]
+		}
+	  ]
+}
