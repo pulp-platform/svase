@@ -8,6 +8,7 @@
 #pragma once
 
 #include "fmt/format.h"
+#include "slang/ast/symbols/MemberSymbols.h"
 #include "slang/ast/symbols/BlockSymbols.h"
 #include "slang/ast/symbols/InstanceSymbols.h"
 #include "slang/ast/symbols/ParameterSymbols.h"
@@ -113,7 +114,8 @@ static inline const TSym *synToSym(const SyntaxNode &syn, const Scope &scope) {
   for (auto &memSym : scope.membersOfType<TSym>()) {
     size_t memIdx = getSymSourceLocIdx(memSym);
     if constexpr (std::is_same_v<TSym, GenerateBlockSymbol> ||
-                  std::is_same_v<TSym, GenerateBlockArraySymbol>) {
+                  std::is_same_v<TSym, GenerateBlockArraySymbol> ||
+                  std::is_same_v<TSym, ContinuousAssignSymbol>) {
       // We account here for a difference that appears
       // The SyntaxNode start with "<name>"
       // The Symbol location is at the "begin : <name>"" so we need to skip the
@@ -124,6 +126,12 @@ static inline const TSym *synToSym(const SyntaxNode &syn, const Scope &scope) {
       if (!memSyn) {
         printf("Warning: Symbol %s has no syntax.\n", memSym.name.data());
         continue;
+      }
+
+      if constexpr (std::is_same_v<TSym, ContinuousAssignSymbol>) {
+        // assign a=b; gives AssignmentExpression from getSyntax with 
+        // ContinuousAssignment as its parent
+        memSyn = memSyn->parent;
       }
 
       if (memSyn->kind == syn.kind) {
