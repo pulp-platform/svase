@@ -57,6 +57,9 @@ public:
 /// by `UniqueModuleWriter`.
 class ParameterRewriter : public DesignRewriter<ParameterRewriter> {
 private:
+  /// Make a equals token for a parameter initializer
+  Token makeEquals();
+
   /// Get the unique module containing a given parameter declaration syntax or
   /// null.
   DesignUniqueModule *

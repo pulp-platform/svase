@@ -6,9 +6,11 @@
 //
 // Test the following parameter propagation scenarios:
 // - to port of instantiated module
+// - to param without default (has no initializer)
 
 module test2 #(
 	parameter int unsigned PortParam = 0,
+    parameter int unsigned NoDefaultParam,
 	parameter type PortTypeParam = logic
 ) ( );
 	localparam int unsigned Module2Param = PortParam;
@@ -22,6 +24,7 @@ module test #( ) ( );
 
 	test2 #(
 		.PortParam(TopParam),
+        .NoDefaultParam(TopParam),
 		.PortTypeParam(TypeParam)
 	) i_test2 ( );
 endmodule
