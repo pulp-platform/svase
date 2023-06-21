@@ -57,6 +57,10 @@ void UniqueModuleRewriter::handle(const ModuleDeclarationSyntax &modSyn) {
     remove(modSyn);
 }
 
+Token ParameterRewriter::makeEquals() {
+  return makeToken(TokenKind::Equals, *strAlloc.emplace("="));
+}
+
 DesignUniqueModule *ParameterRewriter::getUniqueModule(
     const ParameterDeclarationBaseSyntax &pd) const {
   // Obtain module instance from either port list or root (skip if in package or
@@ -317,9 +321,11 @@ void ParameterRewriter::handle(const ParameterDeclarationSyntax &pd) {
     if (paramType.isEnum())
       exprStr = fmt::format("{}'({})", pd.type.get()->toString(), exprStr);
     auto &exprSyn = this->parse(exprStr).template as<ExpressionSyntax>();
+
     // Rebuild assignment
-    auto newEquals =
-        EqualsValueClauseSyntax(decl->initializer->equals, exprSyn);
+    // create new equals token as params w\o defaults do not have a '='
+    // (and creating a new one is likely faster than checking first)
+    auto newEquals = EqualsValueClauseSyntax(makeEquals(), exprSyn);
     auto declSyn = DeclaratorSyntax(decl->name, decl->dimensions, &newEquals);
     newDeclStrs.emplace_back(declSyn.toString());
   }
