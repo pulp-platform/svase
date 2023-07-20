@@ -7,7 +7,11 @@
       "request": "launch",
       "program": "${workspaceFolder}/build/svase",
       "cwd": "${workspaceFolder}/test/param",
-      "args": ["test", "../debug/port-to-module_out.sv", "port-to-module.sv"],
+      "args": [
+        "test",
+        "../debug/port-to-module_out.sv",
+        "port-to-module.sv"
+      ],
       "preLaunchTask": "createDebugDirectory"
     },
     {
@@ -16,7 +20,11 @@
       "request": "launch",
       "program": "${workspaceFolder}/build/svase",
       "cwd": "${workspaceFolder}/test/param",
-      "args": ["test", "../debug/param-instance_out.sv", "param-instance.sv"],
+      "args": [
+        "test",
+        "../debug/param-instance_out.sv",
+        "param-instance.sv"
+      ],
       "preLaunchTask": "createDebugDirectory"
     },
     {
@@ -25,7 +33,11 @@
       "request": "launch",
       "program": "${workspaceFolder}/build/svase",
       "cwd": "${workspaceFolder}/test/param",
-      "args": ["test", "../debug/param-in-gen_out.sv", "param-in-gen.sv"],
+      "args": [
+        "test",
+        "../debug/param-in-gen_out.sv",
+        "param-in-gen.sv"
+      ],
       "preLaunchTask": "createDebugDirectory"
     },
     {
@@ -34,7 +46,11 @@
       "request": "launch",
       "program": "${workspaceFolder}/build/svase",
       "cwd": "${workspaceFolder}/test/assign",
-      "args": ["test", "../debug/assign_out.sv", "assign.sv"],
+      "args": [
+        "test",
+        "../debug/assign_out.sv",
+        "assign.sv"
+      ],
       "preLaunchTask": "createDebugDirectory"
     }
   ],
