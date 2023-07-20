@@ -8,9 +8,9 @@
 #pragma once
 
 #include "fmt/format.h"
-#include "slang/ast/symbols/MemberSymbols.h"
 #include "slang/ast/symbols/BlockSymbols.h"
 #include "slang/ast/symbols/InstanceSymbols.h"
+#include "slang/ast/symbols/MemberSymbols.h"
 #include "slang/ast/symbols/ParameterSymbols.h"
 #include "slang/ast/types/Type.h"
 #include "slang/ast/types/TypePrinter.h"
@@ -129,7 +129,7 @@ static inline const TSym *synToSym(const SyntaxNode &syn, const Scope &scope) {
       }
 
       if constexpr (std::is_same_v<TSym, ContinuousAssignSymbol>) {
-        // assign a=b; gives AssignmentExpression from getSyntax with 
+        // assign a=b; gives AssignmentExpression from getSyntax with
         // ContinuousAssignment as its parent
         memSyn = memSyn->parent;
       }

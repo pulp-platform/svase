@@ -210,10 +210,9 @@ public:
 
 class AssignmentRewriter : public DesignRewriter<AssignmentRewriter> {
 private:
-  EvalContext &context;
-
-  const Symbol *getLHSNameSymOrBail(const ContinuousAssignSyntax *pd,
-                                    DesignUniqueModule *uniqMod) const;
+  const ContinuousAssignSymbol *
+  getLHSNameSymOrBail(const ContinuousAssignSyntax *pd,
+                      DesignUniqueModule *uniqMod);
   // template <typename T>
   // void replaceAssignmentOrBail(std::string declStr, const T &pd);
 
@@ -221,10 +220,6 @@ private:
 
 public:
   using DesignRewriter::DesignRewriter;
-
-  template<typename... Args>
-  AssignmentRewriter(EvalContext &context, Args&&... args) : 
-    DesignRewriter(std::forward<Args>(args)...), context(context) { }
 
   void handle(const ContinuousAssignSyntax &pd);
 };
