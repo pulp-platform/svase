@@ -6,13 +6,14 @@
 // Gist:    A collection of syntax rewriters leveraging design information.
 
 #include <queue>
-
-#include <queue>
+#include <sstream>
 
 #include "svase/rewrite.h"
 #include "svase/util.h"
 
 #include "fmt/format.h"
+#include "slang/ast/Expression.h"
+#include "slang/ast/expressions/AssignmentExpressions.h"
 #include "slang/ast/symbols/MemberSymbols.h"
 #include "slang/ast/symbols/ParameterSymbols.h"
 #include "slang/ast/symbols/VariableSymbols.h"
@@ -800,9 +801,9 @@ AssignmentRewriter::getUniqueModule(const SyntaxNode &pd) const {
   return design.getUniqueModule(modSyn.header->name.rawText());
 }
 
-const Symbol *
+const ContinuousAssignSymbol *
 AssignmentRewriter::getLHSNameSymOrBail(const ContinuousAssignSyntax *pd,
-                                        DesignUniqueModule *uniqMod) const {
+                                        DesignUniqueModule *uniqMod) {
   if (pd->assignments.size() != 1) {
     diag.log(DiagSev::Warning,
              fmt::format(
@@ -813,49 +814,57 @@ AssignmentRewriter::getLHSNameSymOrBail(const ContinuousAssignSyntax *pd,
     return nullptr;
   }
 
-  // debugging
-  for (auto assign : pd->assignments) {
-    fmt::print("\n\nassign {} {} {}\n", assign->toString(), toString(assign->kind), assign->getChildCount());
-    for( size_t i=0; i<assign->getChildCount(); i++ ){
-      auto child = assign->childNode(i);
-      if(child) {
-        fmt::print("    i:{}->{}   k: {}\n", i, child->toString(), toString(child->kind));
-      }
-    }
-  }
-
   auto &scope =
-        uniqMod->getInstances().begin()->symbol->body.template as<Scope>();
-  const ContinuousAssignSymbol &memberSym = *(synToSym<ContinuousAssignSymbol>(*pd, scope));
-  auto &assign = memberSym.getAssignment();
-  fmt::print("location: {} - {}\n", assign.sourceRange.start().offset(), assign.sourceRange.end().offset());
-  auto val = assign.eval(this->context);
-  auto& diags = this->context.getDiagnostics();
-  for(auto diag : diags) {
-    fmt::print("error? {}\n", diag.isError());
-  }
-  if(val) {
-    fmt::print("{}\n", val.toString());
-  } else {
-    fmt::print("val is null\n");
-  }
-
-  return nullptr;
+      uniqMod->getInstances().begin()->symbol->body.template as<Scope>();
+  const ContinuousAssignSymbol &memberSym =
+      *(synToSym<ContinuousAssignSymbol>(*pd, scope));
+  return &memberSym;
 }
 
 void AssignmentRewriter::handle(const ContinuousAssignSyntax &pd) {
   auto uniqMod = getUniqueModule(pd);
   if (!uniqMod)
     return;
-  fmt::print("ContinuousAssignSyntax {} \n", pd.toString());
   auto memberSym = getLHSNameSymOrBail(&pd, uniqMod);
   if (!memberSym)
     return;
-  /*auto newEquals =
-        EqualsValueClauseSyntax(decl->initializer->equals, exprSyn);
-    auto declSyn = DeclaratorSyntax(decl->name, decl->dimensions, &newEquals);
-    newDeclStrs.emplace_back(declSyn.toString());*/
-  fmt::print("memberSym {} \n", memberSym->name);
+
+  auto &scope =
+      uniqMod->getInstances().begin()->symbol->body.template as<Scope>();
+  auto &assignExpr = memberSym->getAssignment();
+  if (assignExpr.kind == ExpressionKind::Invalid) {
+    return;
+  }
+  auto &assign =
+      memberSym->getAssignment().as<slang::ast::AssignmentExpression>();
+  auto &right = assign.right();
+  EvalContext ctx(scope.getCompilation(), EvalFlags::CacheResults);
+  ConstantValue constant = right.eval(ctx);
+  if (!constant.bad()) {
+    auto exprStr = constant.toString(SVInt::MAX_BITS, true, true);
+    std::string nonConstStr = exprStr;
+    auto contAssignStr = pd.toString();
+    std::stringstream contStrStream(contAssignStr);
+    std::string segment;
+    std::vector<std::string> seglist;
+
+    while (std::getline(contStrStream, segment, '=')) {
+      seglist.push_back(segment);
+    }
+
+    auto newAssignStr = fmt::format("{}= {};", seglist[0], exprStr);
+
+    auto &newContAssign = parse(newAssignStr);
+    if (newContAssign.kind != SyntaxKind::ContinuousAssign) {
+      diag.log(
+          DiagSev::Error,
+          fmt::format("misparsed ContinuousAssign as kind `{}`; left unchanged",
+                      toString(newContAssign.kind)),
+          pd, true);
+      return;
+    }
+    replace(pd, newContAssign);
+  }
 }
 
 } // namespace svase

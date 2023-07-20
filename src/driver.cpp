@@ -223,9 +223,9 @@ int driverMain(int argc, char **argv) {
   synTree =
       ParameterRewriter(*design, alloc, strAlloc, newDiag).transform(synTree);
 
-  EvalContext context(*compilation);
   // resolve constant continous assignments (assign a = bla;)
-  synTree = AssignmentRewriter(context, *design, alloc, strAlloc, newDiag).transform(synTree);
+  synTree =
+      AssignmentRewriter(*design, alloc, strAlloc, newDiag).transform(synTree);
   // } catch (const std::exception e) {diag.log(DiagSev::Fatal, e.what()); ok =
   // false;}
   // if (!ok) return 6;
