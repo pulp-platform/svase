@@ -6,17 +6,17 @@
 
 BUILD_DIR ?= build
 BUILD_TYPE ?= Debug
-DEPS := deps/fmt deps/slang deps/cxxopts
+DEPS := deps/fmt/build deps/slang/build deps/cxxopts/build
 
 ## build svase in debug mode (default)
-all: debug
+all: debug 
 
 ## calls build in release mode
-release:
+release: $(DEPS)
 	@$(MAKE) build BUILD_TYPE=Release
 
 ## calls build with debug mode
-debug:
+debug: $(DEPS)
 	@$(MAKE) build BUILD_TYPE=Debug
 
 build: $(DEPS)
@@ -25,7 +25,9 @@ build: $(DEPS)
 	@$(MAKE) -C $(BUILD_DIR)
 
 ## install each dependency
-deps/%:
+deps/%/build:
+	git submodule init
+	git submodule update
 	@echo "Installing $*..."
 	@$(MAKE) -C deps/ install_$*
 
