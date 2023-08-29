@@ -524,6 +524,7 @@ GenerateRewriter::unrollGenSyntax(const CaseGenerateSyntax &caseSyn,
     default:
       diag.log(DiagSev::Fatal, "Encountered unexpected generate case item type",
                item);
+      exit(1);
     }
     auto &itemSyn = caseNode->as<MemberSyntax>();
     auto newSyn = unrollGenSyntax(itemSyn, scope, beginName,
