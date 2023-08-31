@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(DEP_INSTALL_DIR deps/install)
 set(CMAKE_PREFIX_PATH ${DEP_INSTALL_DIR})
 link_directories(${DEP_INSTALL_DIR}/lib64)
+link_directories(${DEP_INSTALL_DIR}/lib) # in docker images it builds a lib folder
 include_directories(${DEP_INSTALL_DIR}/include)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror")
