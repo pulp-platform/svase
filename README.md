@@ -48,7 +48,15 @@ This project is still considered to be in early development; some parts may not 
 * [ ] Investigate Occamy Top as test
 
 ## Install & Build
-Tested with GCC 11.2.0 and cmake 3.20.2
+The build requirements for _SVase_ are mostly dicated by the [Slang build requirements](https://sv-lang.com/building.html#build-requirements).
+The following requirements should be sufficient:
+- CMake 3.15
+- C++20 compatible compiler (GCC 10, Clang 16, XCode 14.3)
+- Python 3
+
+The only tested configuration is GCC 11.2.0 with CMake 3.20.2 and Python 3.6.
+Depending on where/how you installed the compiler, CMake may not find the correct one. 
+In this case you can manually specify a compiler, `scripts/svase.env` provides and example for this.
 
 One-liner:
 ```bash
@@ -62,6 +70,7 @@ source scripts/svase.env
 cd deps
 make
 cd ..
+# build Svase
 mkdir build && cd build
 cmake ..
 make
@@ -86,7 +95,7 @@ cd ..
 ## Format inplace offline to match linter
 
 ```bash
-clang-format -style=LLVM -i src/*.cpp include/svase/*.h
+make format
 ```
 
 ## License
