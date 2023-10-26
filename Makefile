@@ -25,11 +25,17 @@ build: $(DEPS)
 	@$(MAKE) -C $(BUILD_DIR)
 
 ## install each dependency
-deps/%/build:
-	git submodule init
-	git submodule update
+deps/%/build: .git
+	git submodule update --init deps/$*
 	@echo "Installing $*..."
 	@$(MAKE) -C deps/ install_$*
+
+# if downloaded as zip, the submodules need to be restored
+.git:
+	@if [ ! -d ".git" ]; then \
+		git init; \
+		awk -f scripts/restore_submodules.awk .gitmodules; \
+	fi
 
 ## format code to match linter
 format:
