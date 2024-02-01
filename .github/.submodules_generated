@@ -1,0 +1,12 @@
+[submodule "deps/fmt"]
+	path = deps/fmt
+	hash = d2c47c0df23d95e3d7c5def06e5f67f32eb7ffc7
+	url = https://github.com/fmtlib/fmt.git
+[submodule "deps/cxxopts"]
+	path = deps/cxxopts
+	hash = 2e3c6991d33811878ebcc0839d3815850d129b3a
+	url = https://github.com/jarro2783/cxxopts
+[submodule "deps/slang"]
+	path = deps/slang
+	hash = fd8849cc8d37cf3240ce8aa0d8bbf6d69c8da840
+	url = https://github.com/MikePopoloski/slang.git
