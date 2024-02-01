@@ -18,7 +18,7 @@ using namespace slang::syntax;
 
 bool Diag::testOrInsertUniqMsg(DiagSev sev, std::string_view msg,
                                size_t locHash, bool showCode) {
-  auto insStr = fmt::format("{:0x}{:0x}|{}", showCode, uint(sev), msg);
+  auto insStr = fmt::format("{:0x}{:0x}|{}", showCode, int(sev), msg);
   // Check in two stages whether message was already logged.
   if (uniqMsgs.count(locHash) && uniqMsgs[locHash].count(insStr))
     return true;
