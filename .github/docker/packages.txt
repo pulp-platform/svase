@@ -1,0 +1,7 @@
+coreutils
+git
+make
+cmake
+clang16
+clang16-dev
+boost-dev=1.82.0-r3
