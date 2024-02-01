@@ -35,7 +35,7 @@ deps/%/build: .git
 .git:
 	@if [ ! -d ".git" ]; then \
 		git init; \
-		awk -f scripts/restore_submodules.awk .gitmodules; \
+		.github/restore_submodules.sh; \
 	fi
 
 ## format code to match linter

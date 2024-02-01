@@ -1,0 +1,43 @@
+# Copyright (c) 2022 ETH Zurich and University of Bologna.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+
+# Author:  Philippe Sauter <phsauter@ethz.ch>
+
+name: Build
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  save-submodule-hashes:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Check if .gitmodules exists
+      run: |
+        if [ -e .gitmodules ]; then
+          echo "Submodules found..."
+        else
+          echo "No submodules, this should not be run"
+          exit 1
+        fi
+
+    - name: Generate File
+      run: |
+        .github/save_submodules.sh
+
+    # bot details: https://github.com/orgs/community/discussions/26560#discussioncomment-3531273
+    - name: Commit and Push Changes
+      if: success()
+      run: |
+        if [ git diff --exit-code .github/.submodules_generated ]; then
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add .github/.submodules_generated
+          git commit -m "ci: update submodule commit hashes"
+          git push
+        fi

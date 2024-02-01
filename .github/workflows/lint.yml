@@ -6,10 +6,9 @@
 
 name: lint
 
-on: push
+on: [ push, pull_request, workflow_dispatch ]
 
 jobs:
-  # TODO: add license check
   lint-cxx:
     runs-on: ubuntu-latest
     steps:
