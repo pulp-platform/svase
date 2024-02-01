@@ -9,7 +9,7 @@ BUILD_TYPE ?= Debug
 DEPS := deps/fmt/build deps/slang/build deps/cxxopts/build
 
 ## build svase in debug mode (default)
-all: debug 
+all: debug
 
 ## calls build in release mode
 release: $(DEPS)
@@ -20,9 +20,10 @@ debug: $(DEPS)
 	@$(MAKE) build BUILD_TYPE=Debug
 
 build: $(DEPS)
+	@rm -rf $(BUILD_DIR)
 	@mkdir -p $(BUILD_DIR)
-	@cd $(BUILD_DIR) && cmake -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) ..
-	@$(MAKE) -C $(BUILD_DIR)
+	cmake -S . -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=$(BUILD_TYPE)
+	cmake --build $(BUILD_DIR)
 
 ## install each dependency
 deps/%/build: .git
