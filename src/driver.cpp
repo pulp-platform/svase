@@ -53,7 +53,7 @@ cxxopts::Options genCmdOpts() {
           cxxopts::value<std::string>()) // TODO
       ("V,verbosity",
        "Verbosity of stderr diagnostics: 3(errors), 2(warnings), 1(notes)",
-       cxxopts::value<uint>()->default_value("2"))
+       cxxopts::value<int>()->default_value("2"))
       // Informational arguments (cause early exit)
       ("h,help", "Print usage")("v,version", "Print version information");
 
@@ -100,7 +100,7 @@ int driverMain(int argc, char **argv) {
   }
   if (cmdOptsRes.count("timetrace"))
     TimeTrace::initialize();
-  verbosity = (DiagSev)cmdOptsRes["verbosity"].as<uint>();
+  verbosity = (DiagSev)cmdOptsRes["verbosity"].as<int>();
   diag.setVerbosity(verbosity);
 
   // Parse and handle Slang args using its driver

@@ -31,15 +31,22 @@ jobs:
         .github/save_submodules.sh
 
     # bot details: https://github.com/orgs/community/discussions/26560#discussioncomment-3531273
+    # main is protected so we can't push there
     - name: Commit and Push Changes
       if: success()
       run: |
+        current_branch=$(git rev-parse --abbrev-ref HEAD)
+        if [ "$current_branch" != "main" ]; then
         if git diff --exit-code .github/.submodules_generated; then
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config user.name "github-actions[bot]"
-          git add .github/.submodules_generated
-          git commit -m "ci: update submodule commit hashes"
-          git push
+            echo "No differences for submodules found. Exiting gracefully."
+            exit 0
+        else
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git config user.name "github-actions[bot]"
+            git add .github/.submodules_generated
+            git commit -m "ci: update submodule commit hashes"
+            git push
+        fi
         fi
 
   build:
