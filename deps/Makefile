@@ -21,7 +21,8 @@ install_fmt: | install
 install_slang: | install
 	git submodule update --init --recursive slang
 	cd slang && cmake -B build
-	cmake --build slang/build -j$(shell nproc) -DSLANG_INCLUDE_TOOLS=OFF -DSLANG_INCLUDE_TESTS=OFF
+	cmake -S slang -B slang/build -DSLANG_INCLUDE_TOOLS=OFF -DSLANG_INCLUDE_TESTS=OFF
+	cmake --build slang/build -j$(shell nproc)
 	cmake --install slang/build --prefix install
 
 install_cxxopts: | install
