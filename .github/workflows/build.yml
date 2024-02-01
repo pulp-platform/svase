@@ -41,3 +41,56 @@ jobs:
           git commit -m "ci: update submodule commit hashes"
           git push
         fi
+
+  build:
+    runs-on: ubuntu-latest
+    env:
+      BUILD_TYPE: Release
+    needs: save-submodule-hashes
+    strategy:
+      matrix:
+        os: ['alpine:3.19']
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: 'recursive'
+
+    - name: Restore dependencies from cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          deps
+        key: |
+          ${{matrix.os}}-deps-all-${{ hashFiles('.github/.submodules_generated') }}
+        restore-keys: |
+          ${{matrix.os}}-deps-all-
+
+    - name: Build OS
+      shell: bash
+      run: |
+        export BASE_IMG=${{matrix.os}}
+        docker build .github/docker -t svase-builder
+
+    - name: Build SVase
+      shell: bash
+      run: |
+        export GID=$(id -g)
+        export REPO_PATH=${{github.workspace}}/
+        export CMAKE_BUILD_PORTABLE=1
+        docker-compose -f .github/docker/docker-compose.yml up
+
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          deps
+        key: |
+          ${{matrix.os}}-deps-all-${{ hashFiles('.github/.submodules_generated') }}
+
+    - name: Upload
+      uses: actions/upload-artifact@v4
+      with:
+        name: svase-linux_${{github.run_number}}
+        path: ${{github.workspace}}/build/svase
