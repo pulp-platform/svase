@@ -16,6 +16,7 @@
 #include "svase/diag.h"
 #include "svase/preproc.h"
 #include "svase/rewrite.h"
+#include "version.h"
 
 #include "slang/ast/symbols/CompilationUnitSymbols.h"
 #include "slang/driver/Driver.h"
@@ -99,6 +100,15 @@ int driverMain(int argc, char **argv) {
     const auto &helpOptions = cmdOpts.help();
     fmt::print("{}\n", helpOptions);
     return 0;
+  }
+  if (cmdOptsRes.count("version")) {
+    fmt::print("{}\n", VERSION);
+    return 0;
+  }
+  if (!cmdOptsRes.count("top") || !cmdOptsRes.count("out") || !cmdOptsRes.count("files")) {
+    const auto &helpOptions = cmdOpts.help();
+    fmt::print("Error: Missing required arguments: svase TOP_MODULE OUTPUT FILES\n\n{}\n", helpOptions);
+    return 1;
   }
   if (cmdOptsRes.count("timetrace"))
     TimeTrace::initialize();

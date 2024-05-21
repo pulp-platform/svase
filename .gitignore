@@ -4,3 +4,4 @@ deps/**/build
 deps/install
 splitted_output/
 test/debug
+include/version.h
