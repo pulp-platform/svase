@@ -843,17 +843,9 @@ void AssignmentRewriter::handle(const ContinuousAssignSyntax &pd) {
   ConstantValue constant = right.eval(ctx);
   if (!constant.bad()) {
     auto exprStr = constant.toString(SVInt::MAX_BITS, true, true);
-    std::string nonConstStr = exprStr;
-    auto contAssignStr = pd.toString();
-    std::stringstream contStrStream(contAssignStr);
-    std::string segment;
-    std::vector<std::string> seglist;
-
-    while (std::getline(contStrStream, segment, '=')) {
-      seglist.push_back(segment);
-    }
-
-    auto newAssignStr = fmt::format("{}= {};", seglist[0], exprStr);
+    auto &left = assign.left();
+    auto lhsStr  = left.syntax->toString();
+    auto newAssignStr = fmt::format("assign {}= {};", lhsStr, exprStr);
 
     auto &newContAssign = parse(newAssignStr);
     if (newContAssign.kind != SyntaxKind::ContinuousAssign) {
