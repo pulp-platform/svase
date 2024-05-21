@@ -853,7 +853,7 @@ void AssignmentRewriter::handle(const ContinuousAssignSyntax &pd) {
     auto exprStr = constant.toString(SVInt::MAX_BITS, true, true);
     auto &left = assign.left();
     auto lhsStr  = left.syntax->toString();
-    auto newAssignStr = fmt::format("assign {}= {};", lhsStr, exprStr);
+    auto newAssignStr = fmt::format("\nassign {}= {};", lhsStr, exprStr);
 
     auto &newContAssign = parse(newAssignStr);
     if (newContAssign.kind != SyntaxKind::ContinuousAssign) {
