@@ -629,9 +629,17 @@ GenerateRewriter::unrollGenSyntax(const HierarchyInstantiationSyntax &instSyn,
       instSymGeneric->kind == SymbolKind::UninstantiatedDef) {
     return clone(instSyn, alloc);
   }
-  auto &instSym = instSymGeneric->as<InstanceSymbol>();
-  if (!instSym.isModule())
-    return clone(instSyn, alloc);
+
+  // instance arrays (interface arrays etc) do not inherit from InstanceSymbol
+  // they inherit from Symbol directy, hence they have no isModule()
+  // we catch failing casts and return default
+  try {
+        auto& instSym = instSymGeneric->as<slang::ast::InstanceSymbol>();
+        if (!instSym.isModule())
+          return clone(instSyn, alloc);
+    } catch (const slang::assert::AssertionException& e) {
+        return clone(instSyn, alloc);
+    }
   // Identify unique module
   auto uniqMod = design.getUniqueModule(instSymGeneric->as<InstanceSymbol>());
   if (!uniqMod)
