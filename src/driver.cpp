@@ -38,6 +38,8 @@ cxxopts::Options genCmdOpts() {
           "files", "The source files to process",
           cxxopts::value<std::vector<std::string>>())
       // Optional arguments
+      ("intermediate", "Output intermediate steps (ie after recompiling)",
+       cxxopts::value<bool>()->implicit_value("false"))
       ("l,lib", "Output library of individual modules",
        cxxopts::value<bool>()->implicit_value("false")) // TODO
       ("split",
@@ -202,6 +204,10 @@ int driverMain(int argc, char **argv) {
   std::vector<std::pair<std::string, std::string>> intermediateBuffers;
   intermediateBuffers.emplace_back(cmdOptsRes["top"].as<std::string>(),
                                    synTree->root().toString());
+  if(cmdOptsRes["intermediate"].as<bool>()) {
+    writeToFile("recompiled.sv", intermediateBuffers.back().second);
+  }
+
   Diag newDiag;
   newDiag.setVerbosity(verbosity);
   SourceManager newSourceManager;
