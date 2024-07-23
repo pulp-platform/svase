@@ -40,9 +40,9 @@ cxxopts::Options genCmdOpts() {
           cxxopts::value<std::vector<std::string>>())
       // Optional arguments
       ("intermediate", "Output intermediate steps (ie after recompiling)",
-       cxxopts::value<bool>()->implicit_value("false"))
-      ("l,lib", "Output library of individual modules",
-       cxxopts::value<bool>()->implicit_value("false")) // TODO
+       cxxopts::value<bool>()->implicit_value("false"))(
+          "l,lib", "Output library of individual modules",
+          cxxopts::value<bool>()->implicit_value("false")) // TODO
       ("split",
        "write all files in split files", // TODO add option to pass a path
        cxxopts::value<bool>()->implicit_value("false"))(
@@ -105,9 +105,12 @@ int driverMain(int argc, char **argv) {
     fmt::print("{}\n", VERSION);
     return 0;
   }
-  if (!cmdOptsRes.count("top") || !cmdOptsRes.count("out") || !cmdOptsRes.count("files")) {
+  if (!cmdOptsRes.count("top") || !cmdOptsRes.count("out") ||
+      !cmdOptsRes.count("files")) {
     const auto &helpOptions = cmdOpts.help();
-    fmt::print("Error: Missing required arguments: svase TOP_MODULE OUTPUT FILES\n\n{}\n", helpOptions);
+    fmt::print("Error: Missing required arguments: svase TOP_MODULE OUTPUT "
+               "FILES\n\n{}\n",
+               helpOptions);
     return 1;
   }
   if (cmdOptsRes.count("timetrace"))
@@ -214,7 +217,7 @@ int driverMain(int argc, char **argv) {
   std::vector<std::pair<std::string, std::string>> intermediateBuffers;
   intermediateBuffers.emplace_back(cmdOptsRes["top"].as<std::string>(),
                                    synTree->root().toString());
-  if(cmdOptsRes["intermediate"].as<bool>()) {
+  if (cmdOptsRes["intermediate"].as<bool>()) {
     writeToFile("recompiled.sv", intermediateBuffers.back().second);
   }
 

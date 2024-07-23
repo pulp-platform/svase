@@ -634,12 +634,12 @@ GenerateRewriter::unrollGenSyntax(const HierarchyInstantiationSyntax &instSyn,
   // they inherit from Symbol directy, hence they have no isModule()
   // we catch failing casts and return default
   try {
-        auto& instSym = instSymGeneric->as<slang::ast::InstanceSymbol>();
-        if (!instSym.isModule())
-          return clone(instSyn, alloc);
-    } catch (const slang::assert::AssertionException& e) {
-        return clone(instSyn, alloc);
-    }
+    auto &instSym = instSymGeneric->as<slang::ast::InstanceSymbol>();
+    if (!instSym.isModule())
+      return clone(instSyn, alloc);
+  } catch (const slang::assert::AssertionException &e) {
+    return clone(instSyn, alloc);
+  }
   // Identify unique module
   auto uniqMod = design.getUniqueModule(instSymGeneric->as<InstanceSymbol>());
   if (!uniqMod)
@@ -852,7 +852,7 @@ void AssignmentRewriter::handle(const ContinuousAssignSyntax &pd) {
   if (!constant.bad()) {
     auto exprStr = constant.toString(SVInt::MAX_BITS, true, true);
     auto &left = assign.left();
-    auto lhsStr  = left.syntax->toString();
+    auto lhsStr = left.syntax->toString();
     auto newAssignStr = fmt::format("\nassign {}= {};", lhsStr, exprStr);
 
     auto &newContAssign = parse(newAssignStr);
