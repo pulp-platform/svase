@@ -20,6 +20,7 @@ debug: $(DEPS)
 	@$(MAKE) build BUILD_TYPE=Debug
 
 build: $(DEPS)
+	scripts/gen_version.sh > include/version.h
 	@rm -rf $(BUILD_DIR)
 	@mkdir -p $(BUILD_DIR)
 	cmake -S . -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=$(BUILD_TYPE)

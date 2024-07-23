@@ -629,9 +629,17 @@ GenerateRewriter::unrollGenSyntax(const HierarchyInstantiationSyntax &instSyn,
       instSymGeneric->kind == SymbolKind::UninstantiatedDef) {
     return clone(instSyn, alloc);
   }
-  auto &instSym = instSymGeneric->as<InstanceSymbol>();
-  if (!instSym.isModule())
+
+  // instance arrays (interface arrays etc) do not inherit from InstanceSymbol
+  // they inherit from Symbol directy, hence they have no isModule()
+  // we catch failing casts and return default
+  try {
+    auto &instSym = instSymGeneric->as<slang::ast::InstanceSymbol>();
+    if (!instSym.isModule())
+      return clone(instSyn, alloc);
+  } catch (const slang::assert::AssertionException &e) {
     return clone(instSyn, alloc);
+  }
   // Identify unique module
   auto uniqMod = design.getUniqueModule(instSymGeneric->as<InstanceSymbol>());
   if (!uniqMod)
@@ -843,17 +851,9 @@ void AssignmentRewriter::handle(const ContinuousAssignSyntax &pd) {
   ConstantValue constant = right.eval(ctx);
   if (!constant.bad()) {
     auto exprStr = constant.toString(SVInt::MAX_BITS, true, true);
-    std::string nonConstStr = exprStr;
-    auto contAssignStr = pd.toString();
-    std::stringstream contStrStream(contAssignStr);
-    std::string segment;
-    std::vector<std::string> seglist;
-
-    while (std::getline(contStrStream, segment, '=')) {
-      seglist.push_back(segment);
-    }
-
-    auto newAssignStr = fmt::format("{}= {};", seglist[0], exprStr);
+    auto &left = assign.left();
+    auto lhsStr = left.syntax->toString();
+    auto newAssignStr = fmt::format("\nassign {}= {};", lhsStr, exprStr);
 
     auto &newContAssign = parse(newAssignStr);
     if (newContAssign.kind != SyntaxKind::ContinuousAssign) {
