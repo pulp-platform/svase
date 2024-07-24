@@ -186,7 +186,10 @@ template <typename T>
 void ParameterRewriter::replaceParamDeclOrBail(std::string declStr,
                                                const T &pd) {
   auto &newPdSyn = parse(declStr);
-  if (newPdSyn.kind != SyntaxKind::ParameterDeclarationStatement) {
+  // param decl without keyword are parsed as AssignmentExpression
+  if (newPdSyn.kind == SyntaxKind::AssignmentExpression) {
+    return;
+  } else if (newPdSyn.kind != SyntaxKind::ParameterDeclarationStatement) {
     diag.log(DiagSev::Error,
              fmt::format(
                  "misparsed parameter declaration as kind `{}`; left unchanged",
@@ -294,6 +297,13 @@ void ParameterRewriter::handle(const TypeParameterDeclarationSyntax &pd) {
   auto declStr =
       fmt::format("{}{}{}", pd.keyword.toString(), pd.typeKeyword.toString(),
                   fmt::join(newDeclStrs, ", "));
+  if (pd.keyword.toString().empty()) {
+    diag.log(
+        DiagSev::Warning,
+        fmt::format(
+            "parameter declaration without keyword (parameter or localparam)"),
+        pd, true);
+  }
   replaceParamDeclOrBail<TypeParameterDeclarationSyntax>(declStr, pd);
 }
 
@@ -309,6 +319,7 @@ void ParameterRewriter::handle(const ParameterDeclarationSyntax &pd) {
   }
   if (!scope)
     return;
+  // Todo: Use ParameterBuilder instead?
   std::vector<std::string> newDeclStrs;
   for (auto decl : pd.declarators) {
     // Find parameter in compilation; if not found, leave as-is
@@ -331,8 +342,17 @@ void ParameterRewriter::handle(const ParameterDeclarationSyntax &pd) {
     auto declSyn = DeclaratorSyntax(decl->name, decl->dimensions, &newEquals);
     newDeclStrs.emplace_back(declSyn.toString());
   }
+  // Todo: figure out keyword, if the last keyword in the parameter port list
+  // was a localparam, it is localparam, otherwise it is parameter
   auto declStr = fmt::format("{}{}{}", pd.keyword.toString(),
                              pd.type->toString(), fmt::join(newDeclStrs, ", "));
+  if (pd.keyword.toString().empty()) {
+    diag.log(
+        DiagSev::Warning,
+        fmt::format(
+            "parameter declaration without keyword (parameter or localparam)"),
+        pd, true);
+  }
   replaceParamDeclOrBail<ParameterDeclarationSyntax>(declStr, pd);
 }
 

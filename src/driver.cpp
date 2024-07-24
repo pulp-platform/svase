@@ -222,7 +222,7 @@ int driverMain(int argc, char **argv) {
   }
 
   Diag newDiag;
-  newDiag.setVerbosity(verbosity);
+  newDiag.setVerbosity(DiagSev::Error); // avoid reprinting warnings
   SourceManager newSourceManager;
   synTree = slang::syntax::SyntaxTree::fromFileInMemory(
       std::string_view(intermediateBuffers.back().second), newSourceManager,
