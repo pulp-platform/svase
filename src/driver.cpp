@@ -132,10 +132,11 @@ int driverMain(int argc, char **argv) {
   std::string slangArgs = cmdOptsRes.count("slang-args")
                               ? cmdOptsRes["slang-args"].as<std::string>()
                               : "";
-  auto slangCmd = fmt::format(
-      "{} {} {} --top {} {}", argv[0], slangArgs, builtinFlags,
-      cmdOptsRes["top"].as<std::string>(),
+  auto filesStr = fmt::to_string(
       fmt::join(cmdOptsRes["files"].as<std::vector<std::string>>(), " "));
+  auto slangCmd =
+      fmt::format("{} {} {} --top {} {}", argv[0], slangArgs, builtinFlags,
+                  cmdOptsRes["top"].as<std::string>(), filesStr);
   ok &= slangDriver.parseCommandLine(slangCmd);
   ok &= slangDriver.processOptions();
   diag.registerEngine(&slangDriver.sourceManager);

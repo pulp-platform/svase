@@ -294,9 +294,9 @@ void ParameterRewriter::handle(const TypeParameterDeclarationSyntax &pd) {
     auto assignSyn = TypeAssignmentSyntax(decl->name, &newEquals);
     newDeclStrs.emplace_back(assignSyn.toString());
   }
-  auto declStr =
-      fmt::format("{}{}{}", pd.keyword.toString(), pd.typeKeyword.toString(),
-                  fmt::join(newDeclStrs, ", "));
+  auto newDeclStr = fmt::to_string(fmt::join(newDeclStrs, ", "));
+  auto declStr = fmt::format("{}{}{}", pd.keyword.toString(),
+                             pd.typeKeyword.toString(), newDeclStr);
   if (pd.keyword.toString().empty()) {
     diag.log(
         DiagSev::Warning,
@@ -344,8 +344,9 @@ void ParameterRewriter::handle(const ParameterDeclarationSyntax &pd) {
   }
   // Todo: figure out keyword, if the last keyword in the parameter port list
   // was a localparam, it is localparam, otherwise it is parameter
+  auto newDeclStr = fmt::to_string(fmt::join(newDeclStrs, ", "));
   auto declStr = fmt::format("{}{}{}", pd.keyword.toString(),
-                             pd.type->toString(), fmt::join(newDeclStrs, ", "));
+                             pd.type->toString(), newDeclStr);
   if (pd.keyword.toString().empty()) {
     diag.log(
         DiagSev::Warning,
