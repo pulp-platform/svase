@@ -60,7 +60,9 @@ The following requirements should be sufficient:
 - C++20 compatible compiler (GCC 10, Clang 16, XCode 14.3)
 - Python 3
 
-The only tested configuration is GCC 11.2.0 with CMake 3.20.2 and Python 3.6.
+The tested configurations are:
+- GCC 11.2, CMake 3.20 and Python 3.6.
+- GCC 13.1, CMake 3.30 and Python 3.8.
 Depending on where/how you installed the compiler, CMake may not find the correct one. In this case you can manually specify a compiler, `scripts/svase.env` provides and example for this.
 
 #### Build
