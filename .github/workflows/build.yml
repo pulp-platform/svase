@@ -86,7 +86,7 @@ jobs:
         export GID=$(id -g)
         export REPO_PATH=${{github.workspace}}/
         export CMAKE_BUILD_PORTABLE=1
-        docker-compose -f .github/docker/docker-compose.yml up
+        docker compose -f .github/docker/docker-compose.yml up
 
     - name: Cache dependencies
       uses: actions/cache@v4
